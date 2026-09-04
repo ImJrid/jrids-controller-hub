@@ -202,9 +202,6 @@ internal sealed class HubForm : Form
                 case "close":
                     Close();
                     break;
-                case "uninstall":
-                    StartUninstall();
-                    break;
                 case "drag":
                     ReleaseCapture();
                     _ = SendMessage(Handle, WmNclButtonDown, HtCaption, 0);
@@ -379,24 +376,6 @@ internal sealed class HubForm : Form
         }
 
         return new Version(parts[0], parts[1], parts[2], parts[3]) > current;
-    }
-
-    private void StartUninstall()
-    {
-        var uninstaller = FindUninstaller();
-        if (uninstaller is null)
-        {
-            MessageBox.Show(
-                this,
-                "This copy wasn't installed with Setup. Run JridsControllerHubSetup.exe and choose Uninstall, or delete the app folder.",
-                "Uninstall",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-            return;
-        }
-
-        Process.Start(new ProcessStartInfo(uninstaller) { UseShellExecute = true });
-        Close();
     }
 
     private static string? FindUninstaller()
