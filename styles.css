@@ -1295,6 +1295,73 @@ h1 {
   font-weight: 600;
 }
 
+.poll-panel {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ht-line);
+}
+
+.poll-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.poll-head h4 {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.poll-head b {
+  font-size: 22px;
+  font-family: var(--display);
+}
+
+.poll-head span {
+  color: var(--ht-muted);
+  font-size: 12px;
+}
+
+.poll-bars {
+  display: grid;
+  gap: 6px;
+}
+
+.poll-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 52px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--ht-muted);
+}
+
+.poll-track {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--ht-bar);
+  overflow: hidden;
+}
+
+.poll-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.poll-row b {
+  text-align: right;
+  color: var(--ht-text);
+}
+
+.poll-hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--ht-muted);
+}
+
 .controller-svg .btn {
   fill: #1a1d22;
   stroke: #4a5058;

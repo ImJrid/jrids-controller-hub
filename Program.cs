@@ -155,10 +155,15 @@ internal sealed class HubForm : Form
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
         string type;
+        int pollIndex = 0;
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(args.WebMessageAsJson);
             type = doc.RootElement.GetProperty("type").GetString() ?? "";
+            if (doc.RootElement.TryGetProperty("index", out var indexEl) && indexEl.TryGetInt32(out var parsed))
+            {
+                pollIndex = parsed;
+            }
         }
         catch
         {
@@ -168,6 +173,12 @@ internal sealed class HubForm : Form
         if (type == "install-update")
         {
             _ = CheckForUpdatesAsync(apply: true);
+            return;
+        }
+
+        if (type == "poll-measure")
+        {
+            _ = MeasurePollAsync(pollIndex);
             return;
         }
 
@@ -198,6 +209,136 @@ internal sealed class HubForm : Form
     }
 
     private bool _updateInProgress;
+    private CancellationTokenSource? _pollCts;
+
+    private async Task MeasurePollAsync(int index)
+    {
+        _pollCts?.Cancel();
+        _pollCts = new CancellationTokenSource();
+        var token = _pollCts.Token;
+        index = Math.Clamp(index, 0, 3);
+        try
+        {
+            await Task.Run(() => SampleXInputPoll(index, token));
+        }
+        catch (OperationCanceledException)
+        {
+            // Replaced by a newer measure, or the window closed.
+        }
+    }
+
+    private void SampleXInputPoll(int index, CancellationToken token)
+    {
+        var intervals = new List<double>(32768);
+        var clock = Stopwatch.StartNew();
+        var lastPacket = uint.MaxValue;
+        var lastTicks = 0L;
+        var connected = false;
+        var nextUi = TimeSpan.Zero;
+
+        while (clock.Elapsed < TimeSpan.FromSeconds(5) && !token.IsCancellationRequested)
+        {
+            uint status;
+            XInputState state;
+            try
+            {
+                status = XInputGetState((uint)index, out state);
+            }
+            catch (DllNotFoundException)
+            {
+                PostWebJson(new { type = "poll-result", error = "xinput-miss", samples = 0, hz = 0, buckets = Array.Empty<object>() });
+                return;
+            }
+
+            if (status == 0)
+            {
+                connected = true;
+                if (state.dwPacketNumber != lastPacket)
+                {
+                    if (lastPacket != uint.MaxValue)
+                    {
+                        var dtMs = (clock.ElapsedTicks - lastTicks) * 1000.0 / Stopwatch.Frequency;
+                        if (dtMs is > 0.04 and < 40)
+                        {
+                            intervals.Add(dtMs);
+                        }
+                    }
+
+                    lastPacket = state.dwPacketNumber;
+                    lastTicks = clock.ElapsedTicks;
+                }
+            }
+
+            if (clock.Elapsed >= nextUi)
+            {
+                nextUi = clock.Elapsed + TimeSpan.FromMilliseconds(200);
+                PostWebJson(PollPayload("poll-progress", intervals, done: false, connected ? null : "waiting"));
+            }
+        }
+
+        if (token.IsCancellationRequested)
+        {
+            return;
+        }
+
+        if (!connected || intervals.Count < 8)
+        {
+            PostWebJson(new { type = "poll-result", error = "xinput-miss", samples = intervals.Count, hz = 0, buckets = Array.Empty<object>() });
+            return;
+        }
+
+        PostWebJson(PollPayload("poll-result", intervals, done: true, error: null));
+    }
+
+    private static object PollPayload(string type, List<double> intervalsMs, bool done, string? error)
+    {
+        var rates = intervalsMs.ConvertAll(ms => 1000.0 / ms);
+        var hz = rates.Count == 0 ? 0 : Median(rates);
+        return new
+        {
+            type,
+            hz = Math.Round(hz),
+            samples = rates.Count,
+            done,
+            error,
+            buckets = PollBuckets(rates)
+        };
+    }
+
+    private static object[] PollBuckets(List<double> rates)
+    {
+        (string Label, double Min, double Max)[] edges =
+        [
+            ("8000+ Hz", 8000, double.PositiveInfinity),
+            ("4000-8000", 4000, 8000),
+            ("2000-4000", 2000, 4000),
+            ("1000-2000", 1000, 2000),
+            ("500-1000", 500, 1000),
+            ("250-500", 250, 500),
+            ("125-250", 125, 250),
+            ("<125 Hz", 0, 125)
+        ];
+        var total = Math.Max(rates.Count, 1);
+        return edges
+            .Select(edge =>
+            {
+                var count = rates.Count(hz => hz >= edge.Min && hz < edge.Max);
+                return new
+                {
+                    label = edge.Label,
+                    count,
+                    pct = Math.Round(100.0 * count / total, 1)
+                };
+            })
+            .ToArray();
+    }
+
+    private static double Median(List<double> values)
+    {
+        var sorted = values.OrderBy(v => v).ToList();
+        var mid = sorted.Count / 2;
+        return sorted.Count % 2 == 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+    }
 
     private async Task CheckForUpdatesAsync(bool apply)
     {
@@ -385,4 +526,49 @@ internal sealed class HubForm : Form
 
     [DllImport("user32.dll")]
     private static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+
+    [DllImport("xinput1_4.dll", EntryPoint = "XInputGetState")]
+    private static extern uint XInputGetState14(uint dwUserIndex, out XInputState pState);
+
+    [DllImport("xinput9_1_0.dll", EntryPoint = "XInputGetState")]
+    private static extern uint XInputGetState910(uint dwUserIndex, out XInputState pState);
+
+    private static bool _xinputLegacy;
+
+    private static uint XInputGetState(uint index, out XInputState state)
+    {
+        if (_xinputLegacy)
+        {
+            return XInputGetState910(index, out state);
+        }
+
+        try
+        {
+            return XInputGetState14(index, out state);
+        }
+        catch (DllNotFoundException)
+        {
+            _xinputLegacy = true;
+            return XInputGetState910(index, out state);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct XInputGamepad
+    {
+        public ushort wButtons;
+        public byte bLeftTrigger;
+        public byte bRightTrigger;
+        public short sThumbLX;
+        public short sThumbLY;
+        public short sThumbRX;
+        public short sThumbRY;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct XInputState
+    {
+        public uint dwPacketNumber;
+        public XInputGamepad Gamepad;
+    }
 }

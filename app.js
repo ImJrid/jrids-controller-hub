@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.6";
+const APP_VERSION = "1.0.7";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -286,9 +286,20 @@ async function checkForUpdates() {
 
 window.chrome?.webview?.addEventListener("message", (event) => {
   const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-  if (data?.type !== "update-result") return;
-  if (data.error) setUpdateUi({ error: true });
-  else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing });
+  if (data?.type === "update-result") {
+    if (data.error) setUpdateUi({ error: true });
+    else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing });
+    return;
+  }
+  if (data?.type === "poll-progress" || data?.type === "poll-result") {
+    if (data.error === "xinput-miss") {
+      pollUsedNative = false;
+      if (performance.now() >= pollJsUntil) finishJsPoll();
+      return;
+    }
+    if (data.samples > 0) pollUsedNative = true;
+    applyPollPayload(data);
+  }
 });
 
 document.getElementById("update-check")?.addEventListener("click", () => {
@@ -324,6 +335,22 @@ let uiKey = "";
 let slotKey = "";
 let testCircularity = false;
 const traces = { left: {}, right: {} };
+let lastPadTs = 0;
+let pollMeasuring = false;
+let pollJsUntil = 0;
+let pollJsIntervals = [];
+let pollUsedNative = false;
+
+const POLL_EDGES = [
+  { label: "8000+ Hz", min: 8000, max: Infinity },
+  { label: "4000-8000", min: 4000, max: 8000 },
+  { label: "2000-4000", min: 2000, max: 4000 },
+  { label: "1000-2000", min: 1000, max: 2000 },
+  { label: "500-1000", min: 500, max: 1000 },
+  { label: "250-500", min: 250, max: 500 },
+  { label: "125-250", min: 125, max: 250 },
+  { label: "<125 Hz", min: 0, max: 125 },
+];
 
 const ANGLE_STEP = Math.PI / 16;
 const MOCK_PAD = { id: "", axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ value: 0, pressed: false })) };
@@ -474,6 +501,120 @@ function padTitle(id) {
   return { big: (match ? match[1] : id).trim(), small: match?.[2]?.trim() || "" };
 }
 
+function pollBucketsFromHz(rates) {
+  const total = Math.max(rates.length, 1);
+  return POLL_EDGES.map((edge) => {
+    const count = rates.filter((hz) => hz >= edge.min && hz < edge.max).length;
+    return { label: edge.label, count, pct: Math.round((1000 * count) / total) / 10 };
+  });
+}
+
+function median(values) {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function renderPollBars(buckets) {
+  const root = document.getElementById("poll-bars");
+  if (!root) return;
+  root.innerHTML = (buckets || [])
+    .map(
+      (bucket) => `
+      <div class="poll-row">
+        <span>${bucket.label}</span>
+        <div class="poll-track"><div class="poll-fill" style="width:${Math.min(100, bucket.pct || 0)}%"></div></div>
+        <b>${Number(bucket.pct || 0).toFixed(1)}%</b>
+      </div>`
+    )
+    .join("");
+}
+
+function applyPollPayload(data) {
+  const hzEl = document.getElementById("poll-hz");
+  const samplesEl = document.getElementById("poll-samples");
+  const btn = document.getElementById("poll-measure");
+  if (!hzEl || !samplesEl) return;
+  if (data.hz) hzEl.textContent = `${Math.round(data.hz)} Hz`;
+  else hzEl.textContent = "—";
+  if (data.error === "waiting") {
+    samplesEl.textContent = "Waiting for XInput reports...";
+  } else {
+    samplesEl.textContent = `${data.samples || 0} samples`;
+  }
+  renderPollBars(data.buckets);
+  if (data.type === "poll-result" || data.done) {
+    pollMeasuring = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Measure";
+    }
+  }
+}
+
+function finishJsPoll() {
+  const rates = pollJsIntervals.map((ms) => 1000 / ms);
+  applyPollPayload({
+    type: "poll-result",
+    done: true,
+    hz: median(rates),
+    samples: rates.length,
+    buckets: pollBucketsFromHz(rates),
+  });
+}
+
+function startPollMeasure() {
+  pollMeasuring = true;
+  pollUsedNative = false;
+  pollJsIntervals = [];
+  lastPadTs = 0;
+  pollJsUntil = performance.now() + 5000;
+  const btn = document.getElementById("poll-measure");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Measuring...";
+  }
+  document.getElementById("poll-samples")?.replaceChildren(document.createTextNode("Wiggle sticks for 5 seconds"));
+  renderPollBars(pollBucketsFromHz([]));
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({ type: "poll-measure", index: chosenIndex });
+  }
+}
+
+function resetPollPanel() {
+  pollMeasuring = false;
+  pollJsIntervals = [];
+  lastPadTs = 0;
+  pollUsedNative = false;
+  const btn = document.getElementById("poll-measure");
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "Measure";
+  }
+  const hzEl = document.getElementById("poll-hz");
+  if (hzEl) hzEl.textContent = "—";
+  const samplesEl = document.getElementById("poll-samples");
+  if (samplesEl) samplesEl.textContent = "Move a stick, then click Measure";
+  renderPollBars(pollBucketsFromHz([]));
+}
+
+function noteJsPoll(pad) {
+  const ts = Number(pad.timestamp);
+  if (lastPadTs && ts > lastPadTs) {
+    const dt = ts - lastPadTs;
+    if (dt > 0.04 && dt < 40) {
+      const live = document.getElementById("ht-poll");
+      if (live) live.textContent = `${Math.round(1000 / dt)} Hz`;
+      if (pollMeasuring && !pollUsedNative) pollJsIntervals.push(dt);
+    }
+  }
+  lastPadTs = ts;
+  if (pollMeasuring && !pollUsedNative && performance.now() >= pollJsUntil) {
+    finishJsPoll();
+  }
+}
+
 function ensureConnectedUi(pad) {
   const family = detectFamily(pad);
   const key = `${pad.index}:${family}:${pad.axes.length}:${pad.buttons.length}`;
@@ -493,6 +634,7 @@ function ensureConnectedUi(pad) {
           <span>CONNECTED <b>Yes</b></span>
           <span>MAPPING <b id="ht-map"></b></span>
           <span>TIMESTAMP <b id="ht-time"></b></span>
+          <span>POLL <b id="ht-poll">—</b></span>
           <span>VIBRATION <b>${vibrate}</b></span>
         </div>
         <div class="ht-buttons" id="ht-buttons"></div>
@@ -524,6 +666,17 @@ function ensureConnectedUi(pad) {
             </div>
           </div>
         </div>
+        <div class="poll-panel">
+          <div class="poll-head">
+            <h4>POLL RATE</h4>
+            <b id="poll-hz">—</b>
+            <span id="poll-samples">Move a stick, then click Measure</span>
+            <button class="circ-btn" id="poll-measure" type="button">Measure</button>
+            <button id="poll-reset" type="button">Reset</button>
+          </div>
+          <div class="poll-bars" id="poll-bars"></div>
+          <p class="poll-hint">This reads XInput packet timing in the app. Kernel USB 8K (DeepPoll) needs admin ETW and is a separate tool.</p>
+        </div>
         <div class="ht-axes" id="ht-axes"></div>
         <div class="ht-controls">
           <button class="circ-btn${testCircularity ? " on" : ""}" id="circ-toggle" type="button">Test Circularity</button>
@@ -540,6 +693,8 @@ function ensureConnectedUi(pad) {
     traces.left = {};
     traces.right = {};
   });
+  document.getElementById("poll-measure")?.addEventListener("click", () => startPollMeasure());
+  document.getElementById("poll-reset")?.addEventListener("click", () => resetPollPanel());
   document.getElementById("rumble-btn").addEventListener("click", async () => {
     const current = navigator.getGamepads?.()[chosenIndex];
     const actuator = current?.vibrationActuator;
@@ -630,6 +785,7 @@ function renderTester() {
       htBody.innerHTML = emptyArt();
     }
     paintController(MOCK_PAD);
+    lastPadTs = 0;
     return;
   }
 
@@ -639,6 +795,7 @@ function renderTester() {
 
   document.getElementById("ht-map").textContent = pad.mapping || "none";
   document.getElementById("ht-time").textContent = Number(pad.timestamp).toFixed(5);
+  noteJsPoll(pad);
 
   pad.axes.forEach((axis, i) => {
     const fill = document.getElementById(`axis-fill-${i}`);
