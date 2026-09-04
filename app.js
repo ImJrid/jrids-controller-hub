@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.5";
+const APP_VERSION = "1.0.6";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -291,13 +291,19 @@ window.chrome?.webview?.addEventListener("message", (event) => {
   else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing });
 });
 
-document.getElementById("update-check")?.addEventListener("click", () => checkForUpdates());
+document.getElementById("update-check")?.addEventListener("click", () => {
+  setUpdateUi({ checking: true });
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({ type: "install-update" });
+    return;
+  }
+  checkForUpdates();
+});
 document.getElementById("uninstall-app")?.addEventListener("click", () => {
   window.chrome?.webview?.postMessage({ type: "uninstall" });
 });
 const versionLabel = document.getElementById("app-version");
 if (versionLabel) versionLabel.textContent = `Version ${APP_VERSION}`;
-checkForUpdates();
 
 function updateClock() {
   document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {

@@ -165,9 +165,9 @@ internal sealed class HubForm : Form
             return;
         }
 
-        if (type == "check-update")
+        if (type == "install-update")
         {
-            _ = CheckForUpdatesAsync();
+            _ = CheckForUpdatesAsync(apply: true);
             return;
         }
 
@@ -199,7 +199,7 @@ internal sealed class HubForm : Form
 
     private bool _updateInProgress;
 
-    private async Task CheckForUpdatesAsync()
+    private async Task CheckForUpdatesAsync(bool apply)
     {
         try
         {
@@ -213,7 +213,7 @@ internal sealed class HubForm : Form
             var setupUrl = FindSetupAssetUrl(doc.RootElement)
                 ?? $"https://github.com/ImJrid/jrids-controller-hub/releases/download/{tag}/JridsControllerHubSetup.exe";
             var newer = IsNewerThanCurrent(tag);
-            var installing = newer && CanAutoUpdate() && !_updateInProgress;
+            var installing = apply && newer && CanInstallUpdate() && !_updateInProgress;
             PostWebJson(new { type = "update-result", tag, html, installing });
 
             if (!installing)
@@ -254,7 +254,7 @@ internal sealed class HubForm : Form
         BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(json));
     }
 
-    private bool CanAutoUpdate() => FindUninstaller() is not null && !Debugger.IsAttached;
+    private bool CanInstallUpdate() => FindUninstaller() is not null && !Debugger.IsAttached;
 
     private static string? FindSetupAssetUrl(System.Text.Json.JsonElement release)
     {
