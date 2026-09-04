@@ -17,7 +17,7 @@ internal static class Program
             var output = args.Length >= 2
                 ? args[1]
                 : Path.Combine(Path.GetTempPath(), "jrids-usb-poll.json");
-            UsbKernelPoll.CaptureToFile(output, 6);
+            UsbKernelPoll.CaptureToFile(output, 8);
             return;
         }
 
@@ -230,7 +230,7 @@ internal sealed class HubForm : Form
         {
             if (UsbKernelPoll.IsAdministrator())
             {
-                await Task.Run(() => UsbKernelPoll.CaptureToFile(output, 6));
+                await Task.Run(() => UsbKernelPoll.CaptureToFile(output, 8));
             }
             else
             {

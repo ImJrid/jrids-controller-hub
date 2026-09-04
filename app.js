@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.9";
+const APP_VERSION = "1.0.10";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -485,36 +485,40 @@ function padTitle(id) {
 }
 
 function applyUsbPoll(data) {
-  const hzEl = document.getElementById("usb-poll-hz");
-  const statusEl = document.getElementById("usb-poll-status");
-  const bars = document.getElementById("usb-poll-bars");
+  const graph = document.getElementById("usb-poll-graph");
   const btn = document.getElementById("usb-poll-measure");
-  if (!hzEl || !statusEl || !bars) return;
+  if (!graph) return;
   if (data.type === "usb-poll-progress") {
-    hzEl.textContent = "…";
-    statusEl.textContent = "Allow admin if asked, then wiggle the sticks for 6 seconds.";
+    graph.textContent = "Capturing USB interrupts...\n\nAllow admin if asked. Leave the pad plugged in — you do not need to move the sticks.";
     if (btn) btn.disabled = true;
     return;
   }
   if (btn) btn.disabled = false;
   if (data.error) {
-    hzEl.textContent = "—";
-    statusEl.textContent = data.error;
-    bars.innerHTML = "";
+    graph.textContent = data.error;
     return;
   }
-  hzEl.textContent = data.hz ? `${Math.round(data.hz)} Hz` : "—";
-  statusEl.textContent = `${data.samples || 0} USB interrupt samples`;
-  bars.innerHTML = (data.buckets || [])
-    .map(
-      (bucket) => `
-      <div class="poll-row">
-        <span>${bucket.label}</span>
-        <div class="poll-track"><div class="poll-fill" style="width:${Math.min(100, bucket.pct || 0)}%"></div></div>
-        <b>${Number(bucket.pct || 0).toFixed(1)}%</b>
-      </div>`
-    )
-    .join("");
+  const buckets = data.buckets || [];
+  const maxPct = Math.max(...buckets.map((bucket) => Number(bucket.pct) || 0), 0.1);
+  const lines = buckets.map((bucket) => {
+    const width = Number(bucket.bar);
+    const hashes = Number.isFinite(width)
+      ? Math.max(0, width)
+      : Math.round((40 * (Number(bucket.pct) || 0)) / maxPct);
+    const bar = "#".repeat(hashes);
+    const pct = Number(bucket.pct || 0).toFixed(1).padStart(5, " ");
+    return `${String(bucket.label).padEnd(11)} ${bar.padEnd(40)} ${pct}%`;
+  });
+  const hz = Math.round(data.hz || 0);
+  const samples = Number(data.samples || 0).toLocaleString();
+  graph.textContent = [
+    `Poll Rate:  ${hz} Hz`,
+    `Samples:    ${samples}`,
+    "",
+    "Timing Distribution",
+    "",
+    ...lines,
+  ].join("\n");
 }
 
 function ensureConnectedUi(pad) {

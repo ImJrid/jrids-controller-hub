@@ -18,7 +18,7 @@ internal static class UsbKernelPoll
         Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
         try
         {
-            var result = Capture(Math.Clamp(seconds, 3, 15));
+            var result = Capture(Math.Clamp(seconds, 5, 20));
             File.WriteAllText(outputPath, JsonSerializer.Serialize(result));
         }
         catch (Exception ex)
@@ -61,9 +61,9 @@ internal static class UsbKernelPoll
             }
 
             var times = ParseInterruptCompletions(etlPath);
-            if (times.Count < 20)
+            if (times.Count < 30)
             {
-                return Fail("Not enough USB interrupt reports. Move the sticks during the capture.");
+                return Fail("Not enough USB interrupt reports. Keep the pad plugged in over USB.");
             }
 
             var intervalsUs = new List<double>(times.Count);
@@ -76,9 +76,9 @@ internal static class UsbKernelPoll
                 }
             }
 
-            if (intervalsUs.Count < 16)
+            if (intervalsUs.Count < 24)
             {
-                return Fail("USB interrupt timing was too sparse to measure.");
+                return Fail("USB interrupt timing was too sparse. Keep the pad plugged in over USB.");
             }
 
             var hz = 1_000_000.0 / intervalsUs.Average();
@@ -106,7 +106,7 @@ internal static class UsbKernelPoll
 
     private static List<double> ParseInterruptCompletions(string etlPath)
     {
-        var pending = new Dictionary<ulong, (double Start, ulong Pipe, bool Interrupt)>();
+        var pending = new Dictionary<ulong, ulong>();
         var byPipe = new Dictionary<ulong, List<double>>();
 
         using var source = new ETWTraceEventSource(etlPath);
@@ -129,6 +129,7 @@ internal static class UsbKernelPoll
             }
 
             ulong urb = 0;
+            ulong pipe = 0;
             try
             {
                 urb = Convert.ToUInt64(data.PayloadByName("fid_URB_Ptr"));
@@ -138,76 +139,108 @@ internal static class UsbKernelPoll
                 return;
             }
 
+            try
+            {
+                pipe = Convert.ToUInt64(data.PayloadByName("fid_PipeHandle"));
+            }
+            catch
+            {
+                // USBPORT traces may omit the pipe field.
+            }
+
             if (urb == 0)
             {
                 return;
             }
 
-            var interrupt = eventName.Contains("BULK_OR_INTERRUPT", StringComparison.OrdinalIgnoreCase)
-                || eventName.Contains("INTERRUPT", StringComparison.OrdinalIgnoreCase);
-
             if (isStart)
             {
-                ulong pipe = 0;
-                try
-                {
-                    pipe = Convert.ToUInt64(data.PayloadByName("fid_PipeHandle"));
-                }
-                catch
-                {
-                    // USBPORT traces may omit the pipe field.
-                }
-
-                pending[urb] = (data.TimeStampRelativeMSec, pipe, interrupt);
+                pending[urb] = pipe;
                 return;
             }
 
-            if (!pending.Remove(urb, out var tx))
+            if (pending.Remove(urb, out var startPipe) && startPipe != 0)
             {
-                return;
+                pipe = startPipe;
             }
 
-            if (!tx.Interrupt && !interrupt)
-            {
-                return;
-            }
-
-            if (!byPipe.TryGetValue(tx.Pipe, out var list))
+            if (!byPipe.TryGetValue(pipe, out var list))
             {
                 list = [];
-                byPipe[tx.Pipe] = list;
+                byPipe[pipe] = list;
             }
 
             list.Add(data.TimeStampRelativeMSec);
         };
         source.Process();
 
-        return byPipe.Count == 0
-            ? []
-            : byPipe.Values.OrderByDescending(list => list.Count).First().OrderBy(v => v).ToList();
+        return PickPollPipe(byPipe);
+    }
+
+    private static List<double> PickPollPipe(Dictionary<ulong, List<double>> byPipe)
+    {
+        List<double>? best = null;
+        var bestScore = double.MinValue;
+        foreach (var times in byPipe.Values)
+        {
+            if (times.Count < 30)
+            {
+                continue;
+            }
+
+            var ordered = times.OrderBy(v => v).ToList();
+            var intervals = new List<double>();
+            for (var i = 1; i < ordered.Count; i++)
+            {
+                var us = (ordered[i] - ordered[i - 1]) * 1000.0;
+                if (us is > 0 and < 50_000)
+                {
+                    intervals.Add(us);
+                }
+            }
+
+            if (intervals.Count < 24)
+            {
+                continue;
+            }
+
+            var median = intervals.OrderBy(v => v).ElementAt(intervals.Count / 2);
+            var looksLikePoll = median is >= 80 and <= 250;
+            var score = ordered.Count + (looksLikePoll ? 1_000_000 : 0);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = ordered;
+            }
+        }
+
+        return best ?? [];
     }
 
     private static object[] Buckets(List<double> intervalsUs)
     {
-        (string Label, double MinUs, double MaxUs)[] edges =
+        (string Label, double MinHz, double MaxHz)[] edges =
         [
-            ("8000+ Hz", 0, 125),
-            ("7700-8000", 125, 130),
-            ("7200-7700", 130, 139),
-            ("5000-7200", 139, 200),
-            ("<5000 Hz", 200, double.MaxValue)
+            (">8749 Hz", 8749, double.PositiveInfinity),
+            ("8248-8749", 8248, 8749),
+            ("8016-8248", 8016, 8248),
+            ("7798-8016", 7798, 8016),
+            ("7500-7798", 7500, 7798),
+            ("7000-7500", 7000, 7500),
+            ("5000-7000", 5000, 7000),
+            ("<5000 Hz", 0, 5000)
         ];
-        var total = Math.Max(intervalsUs.Count, 1);
+        var rates = intervalsUs.ConvertAll(us => 1_000_000.0 / us);
+        var total = Math.Max(rates.Count, 1);
+        var counts = edges.Select(edge => rates.Count(hz => hz >= edge.MinHz && hz < edge.MaxHz)).ToArray();
+        var maxCount = Math.Max(counts.DefaultIfEmpty(0).Max(), 1);
         return edges
-            .Select(edge =>
+            .Select((edge, i) => new
             {
-                var count = intervalsUs.Count(us => us >= edge.MinUs && us < edge.MaxUs);
-                return new
-                {
-                    label = edge.Label,
-                    count,
-                    pct = Math.Round(100.0 * count / total, 1)
-                };
+                label = edge.Label,
+                count = counts[i],
+                pct = Math.Round(100.0 * counts[i] / total, 1),
+                bar = (int)Math.Round(40.0 * counts[i] / maxCount)
             })
             .ToArray();
     }

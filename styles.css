@@ -1302,65 +1302,20 @@ h1 {
 .usb-poll-card {
   margin-top: 16px;
   padding: 18px 20px;
-  background: var(--panel);
+  background: #0b0c0e;
   border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
-.usb-poll-card h2 {
-  margin: 4px 0 0;
-  font-family: var(--display);
-}
-
-.poll-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 8px;
-}
-
-.poll-head b {
-  font-size: 28px;
-  font-family: var(--display);
-}
-
-.poll-bars {
-  display: grid;
-  gap: 6px;
-  margin: 12px 0;
-}
-
-.poll-row {
-  display: grid;
-  grid-template-columns: 92px 1fr 52px;
-  gap: 8px;
-  align-items: center;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.poll-track {
-  height: 8px;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-.poll-fill {
-  height: 100%;
-  background: var(--accent);
-}
-
-.poll-row b {
-  text-align: right;
-  color: var(--text);
-}
-
-.poll-hint {
-  margin: 0;
+.poll-graph {
+  margin: 0 0 16px;
+  padding: 18px 20px;
+  overflow: auto;
+  font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
   font-size: 13px;
-  color: var(--muted);
+  line-height: 1.45;
+  color: #d7dbdf;
+  white-space: pre;
 }
 
 .controller-svg .btn {
