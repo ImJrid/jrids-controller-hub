@@ -2,6 +2,18 @@
 
 Windows launcher and gamepad tester created by [Jrids](https://x.com/imjrid).
 
+![Jrids Controller Hub home](docs/screenshots/home.png)
+
+## Screenshots
+
+**Gamepad tester**
+
+![Jrids gamepad tester](docs/screenshots/tester.png)
+
+**Settings**
+
+![Jrids Controller Hub settings](docs/screenshots/settings.png)
+
 ## Install
 
 1. Download **JridsControllerHubSetup.exe** from [Releases](../../releases).
