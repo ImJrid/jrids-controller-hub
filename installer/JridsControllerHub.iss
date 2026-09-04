@@ -1,5 +1,5 @@
 #define MyAppName "Jrids Controller Hub"
-#define MyAppVersion "1.0.3"
+#define MyAppVersion "1.0.4"
 #define MyAppPublisher "Jrids"
 #define MyAppURL "https://x.com/imjrid"
 #define MyAppExeName "Jrids Controller Hub.exe"
@@ -44,6 +44,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait postinstall skipifnotsilent
 
 [Code]
 const

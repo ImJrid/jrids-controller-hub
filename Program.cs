@@ -194,25 +194,101 @@ internal sealed class HubForm : Form
         });
     }
 
+    private bool _updateInProgress;
+
     private async Task CheckForUpdatesAsync()
     {
         try
         {
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
+            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
             http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "JridsControllerHub");
             http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/vnd.github+json");
             var json = await http.GetStringAsync("https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest");
             using var doc = System.Text.Json.JsonDocument.Parse(json);
             var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
             var html = doc.RootElement.GetProperty("html_url").GetString() ?? "";
-            var payload = System.Text.Json.JsonSerializer.Serialize(new { type = "update-result", tag, html });
-            BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(payload));
+            var setupUrl = FindSetupAssetUrl(doc.RootElement)
+                ?? $"https://github.com/ImJrid/jrids-controller-hub/releases/download/{tag}/JridsControllerHubSetup.exe";
+            var newer = IsNewerThanCurrent(tag);
+            var installing = newer && CanAutoUpdate() && !_updateInProgress;
+            PostWebJson(new { type = "update-result", tag, html, installing });
+
+            if (!installing)
+            {
+                return;
+            }
+
+            _updateInProgress = true;
+            var setupPath = Path.Combine(Path.GetTempPath(), "JridsControllerHubSetup.exe");
+            await using (var output = File.Create(setupPath))
+            await using (var input = await http.GetStreamAsync(setupUrl))
+            {
+                await input.CopyToAsync(output);
+            }
+
+            BeginInvoke(() =>
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = setupPath,
+                    Arguments = "/VERYSILENT /NORESTART /SUPPRESSMSGBOXES /CLOSEAPPLICATIONS",
+                    UseShellExecute = true
+                });
+                Close();
+            });
         }
         catch
         {
+            _updateInProgress = false;
             const string payload = """{"type":"update-result","error":"offline"}""";
             BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(payload));
         }
+    }
+
+    private void PostWebJson(object payload)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(payload);
+        BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(json));
+    }
+
+    private bool CanAutoUpdate() => FindUninstaller() is not null && !Debugger.IsAttached;
+
+    private static string? FindSetupAssetUrl(System.Text.Json.JsonElement release)
+    {
+        if (!release.TryGetProperty("assets", out var assets) || assets.ValueKind != System.Text.Json.JsonValueKind.Array)
+        {
+            return null;
+        }
+
+        foreach (var asset in assets.EnumerateArray())
+        {
+            var name = asset.TryGetProperty("name", out var nameEl) ? nameEl.GetString() : null;
+            if (!string.Equals(name, "JridsControllerHubSetup.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return asset.TryGetProperty("browser_download_url", out var urlEl) ? urlEl.GetString() : null;
+        }
+
+        return null;
+    }
+
+    private static bool IsNewerThanCurrent(string tag)
+    {
+        var current = typeof(HubForm).Assembly.GetName().Version ?? new Version(0, 0, 0, 0);
+        var parts = tag.TrimStart('v', 'V')
+            .Split('.', '-', '+')
+            .Select(part => int.TryParse(part, out var number) ? number : (int?)null)
+            .Where(number => number.HasValue)
+            .Select(number => number!.Value)
+            .ToList();
+        while (parts.Count < 4)
+        {
+            parts.Add(0);
+        }
+
+        return new Version(parts[0], parts[1], parts[2], parts[3]) > current;
     }
 
     private void StartUninstall()

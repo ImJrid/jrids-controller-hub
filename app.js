@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.0.4";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -231,7 +231,7 @@ function versionNewer(latest, current) {
   return false;
 }
 
-function setUpdateUi({ latest, url, error, checking } = {}) {
+function setUpdateUi({ latest, url, error, checking, installing } = {}) {
   const status = document.getElementById("update-status");
   const link = document.getElementById("update-open");
   const settingsNav = document.querySelector(".nav-settings");
@@ -239,6 +239,13 @@ function setUpdateUi({ latest, url, error, checking } = {}) {
   status.classList.remove("ok", "warn");
   if (checking) {
     status.textContent = "Checking for updates...";
+    return;
+  }
+  if (installing) {
+    status.textContent = `Updating to ${String(latest || "").replace(/^v/i, "")}. The app will restart.`;
+    status.classList.add("warn");
+    link.hidden = true;
+    settingsNav?.classList.add("has-update");
     return;
   }
   if (error) {
@@ -263,16 +270,16 @@ function setUpdateUi({ latest, url, error, checking } = {}) {
 
 async function checkForUpdates() {
   setUpdateUi({ checking: true });
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({ type: "check-update" });
+    return;
+  }
   try {
     const response = await fetch(UPDATE_API, { headers: { Accept: "application/vnd.github+json" } });
     if (!response.ok) throw new Error("update check failed");
     const data = await response.json();
     setUpdateUi({ latest: data.tag_name, url: data.html_url });
   } catch {
-    if (window.chrome?.webview) {
-      window.chrome.webview.postMessage({ type: "check-update" });
-      return;
-    }
     setUpdateUi({ error: true });
   }
 }
@@ -281,7 +288,7 @@ window.chrome?.webview?.addEventListener("message", (event) => {
   const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
   if (data?.type !== "update-result") return;
   if (data.error) setUpdateUi({ error: true });
-  else setUpdateUi({ latest: data.tag, url: data.html });
+  else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing });
 });
 
 document.getElementById("update-check")?.addEventListener("click", () => checkForUpdates());
