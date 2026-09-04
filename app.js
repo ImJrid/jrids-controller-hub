@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.14";
+const APP_VERSION = "1.0.15";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -341,12 +341,9 @@ setInterval(updateClock, 1000);
 
 const statusDot = document.getElementById("pad-status-dot");
 const statusText = document.getElementById("pad-status-text");
-const htSlots = document.getElementById("ht-slots");
 const htBody = document.getElementById("ht-body");
 
-let chosenIndex = 0;
 let uiKey = "";
-let slotKey = "";
 let testCircularity = false;
 const traces = { left: {}, right: {} };
 
@@ -453,17 +450,16 @@ function paintController(pad) {
   });
 }
 
+function connectedPad() {
+  return [...(navigator.getGamepads?.() || [])].find(Boolean) || null;
+}
+
 function emptyArt() {
   return `<div class="ht-empty">${controllerSvg()}<p>Connect your gamepad and press buttons to begin...</p></div>`;
 }
 
 function hypot(x, y) {
   return Math.sqrt(x * x + y * y);
-}
-
-function shortName(id) {
-  if (!id) return "None detected";
-  return id.length > 34 ? `${id.slice(0, 32)}...` : id;
 }
 
 function snapAngle(x, y) {
@@ -477,21 +473,6 @@ function avgError(map) {
   if (vals.length < 8) return null;
   const rms = Math.sqrt(vals.reduce((sum, r) => sum + (1 - r) ** 2, 0) / vals.length);
   return rms * 100;
-}
-
-function renderSlots(pads) {
-  const next = [0, 1, 2, 3].map((i) => (pads[i] ? `${i}:${pads[i].id}` : `${i}:none`)).join("|") + `|${chosenIndex}`;
-  if (next === slotKey) return;
-  slotKey = next;
-  htSlots.innerHTML = [0, 1, 2, 3]
-    .map((i) => {
-      const pad = pads[i];
-      const live = Boolean(pad);
-      const active = i === chosenIndex;
-      const label = live ? `${i + 1}: ${shortName(pad.id)}` : `${i + 1}: None detected`;
-      return `<button class="ht-slot${live ? " live" : ""}${active ? " active" : ""}" data-slot="${i}" type="button">${label}</button>`;
-    })
-    .join("");
 }
 
 function padTitle(id) {
@@ -603,7 +584,7 @@ function ensureConnectedUi(pad) {
     traces.right = {};
   });
   document.getElementById("rumble-btn").addEventListener("click", async () => {
-    const current = navigator.getGamepads?.()[chosenIndex];
+    const current = connectedPad();
     const actuator = current?.vibrationActuator;
     if (!actuator?.playEffect) return;
     await actuator.playEffect("dual-rumble", {
@@ -674,16 +655,8 @@ function drawCircularity(canvas, map, x, y, errorEl) {
 }
 
 function renderTester() {
-  const pads = [...(navigator.getGamepads?.() || [])];
-  while (pads.length < 4) pads.push(null);
-  renderSlots(pads);
+  const pad = connectedPad();
 
-  if (pads.some(Boolean) && !pads[chosenIndex]) {
-    chosenIndex = pads.findIndex((p) => p);
-    slotKey = "";
-  }
-
-  const pad = pads[chosenIndex];
   if (!pad) {
     statusDot.classList.remove("live");
     statusText.textContent = "Connect your gamepad and press buttons to begin...";
@@ -751,21 +724,11 @@ function renderTester() {
   if (r1) r1.textContent = ry.toFixed(5);
 }
 
-htSlots.addEventListener("click", (event) => {
-  const slot = event.target.closest("[data-slot]");
-  if (!slot) return;
-  chosenIndex = Number(slot.dataset.slot);
-  uiKey = "";
-  slotKey = "";
-});
-
 window.addEventListener("gamepadconnected", () => {
   uiKey = "";
-  slotKey = "";
 });
 window.addEventListener("gamepaddisconnected", () => {
   uiKey = "";
-  slotKey = "";
 });
 
 requestAnimationFrame(function loop() {
