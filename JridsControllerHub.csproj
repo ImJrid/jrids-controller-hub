@@ -10,7 +10,7 @@
     <RootNamespace>JridsControllerHub</RootNamespace>
     <Product>Jrids Controller Hub</Product>
     <AssemblyTitle>Jrids Controller Hub</AssemblyTitle>
-    <Version>1.0.8</Version>
+    <Version>1.0.9</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <InvariantGlobalization>true</InvariantGlobalization>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -24,6 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.26" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
   </ItemGroup>
 

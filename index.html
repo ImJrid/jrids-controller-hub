@@ -84,6 +84,12 @@
             <img src="assets/jrids-logo.png" alt="" />
             <span>Jrids</span>
           </button>
+          <button class="nav-btn" data-view="usbpoll" title="8K Poll">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <path d="M4 14h3l2-8 3 12 2-8h6" />
+            </svg>
+            <span>8K Poll</span>
+          </button>
           <button class="nav-btn nav-settings" data-view="settings" title="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
               <circle cx="12" cy="12" r="3" />
@@ -102,7 +108,7 @@
               </div>
               <div class="head-meta">
                 <span class="pill">DEVICES</span>
-                <span class="count" id="tile-count">5</span>
+                <span class="count" id="tile-count">6</span>
               </div>
             </div>
             <div class="tile-grid">
@@ -168,6 +174,20 @@
                 </div>
                 <span class="tile-arrow">Test</span>
               </button>
+
+              <button class="tile" data-view="usbpoll">
+                <div class="tile-glow poll"></div>
+                <div class="tile-icon poll">
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <path d="M8 28h6l4-16 6 24 4-16h12" stroke="#2ecc71" stroke-width="4" stroke-linejoin="round" />
+                  </svg>
+                </div>
+                <div class="tile-copy">
+                  <h2>8K Poll</h2>
+                  <p>Kernel USB poll rate tester</p>
+                </div>
+                <span class="tile-arrow">Open</span>
+              </button>
             </div>
           </section>
 
@@ -189,7 +209,7 @@
                 <div>
                   <p class="about-title">Jrids Controller Hub</p>
                   <p class="about-created">Created by Jrids</p>
-                  <p class="about-version" id="app-version">Version 1.0.8</p>
+                  <p class="about-version" id="app-version">Version 1.0.9</p>
                 </div>
               </div>
               <div class="update-row">
@@ -252,6 +272,30 @@
             <div class="ht-card">
               <div class="ht-slots" id="ht-slots"></div>
               <div class="ht-body" id="ht-body"></div>
+            </div>
+          </section>
+
+          <section id="view-usbpoll" class="view">
+            <div class="page-head">
+              <div>
+                <p class="kicker">Kernel USB</p>
+                <h1>8K Poll</h1>
+              </div>
+              <div class="head-meta">
+                <span class="pill">ETW</span>
+              </div>
+            </div>
+            <div class="usb-poll-card">
+              <div class="poll-head">
+                <div>
+                  <p class="kicker">USB interrupts</p>
+                  <h2>Poll rate</h2>
+                </div>
+                <b id="usb-poll-hz">—</b>
+              </div>
+              <p class="poll-hint" id="usb-poll-status">Plug the pad in over USB. Windows will ask for admin, then capture interrupts for 6 seconds. Move the sticks while it runs.</p>
+              <div class="poll-bars" id="usb-poll-bars"></div>
+              <button class="update-btn" id="usb-poll-measure" type="button">Measure USB 8K</button>
             </div>
           </section>
         </main>

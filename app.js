@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.8";
+const APP_VERSION = "1.0.9";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -289,6 +289,10 @@ window.chrome?.webview?.addEventListener("message", (event) => {
   if (data?.type === "update-result") {
     if (data.error) setUpdateUi({ error: true });
     else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing });
+    return;
+  }
+  if (data?.type === "usb-poll-progress" || data?.type === "usb-poll-result") {
+    applyUsbPoll(data);
   }
 });
 
@@ -302,6 +306,11 @@ document.getElementById("update-check")?.addEventListener("click", () => {
 });
 document.getElementById("uninstall-app")?.addEventListener("click", () => {
   window.chrome?.webview?.postMessage({ type: "uninstall" });
+});
+document.getElementById("usb-poll-measure")?.addEventListener("click", () => {
+  const btn = document.getElementById("usb-poll-measure");
+  if (btn) btn.disabled = true;
+  window.chrome?.webview?.postMessage({ type: "usb-poll" });
 });
 const versionLabel = document.getElementById("app-version");
 if (versionLabel) versionLabel.textContent = `Version ${APP_VERSION}`;
@@ -473,6 +482,39 @@ function renderSlots(pads) {
 function padTitle(id) {
   const match = /([^(]+)(?:\s*\(([^)]+)\))?/.exec(id || "");
   return { big: (match ? match[1] : id).trim(), small: match?.[2]?.trim() || "" };
+}
+
+function applyUsbPoll(data) {
+  const hzEl = document.getElementById("usb-poll-hz");
+  const statusEl = document.getElementById("usb-poll-status");
+  const bars = document.getElementById("usb-poll-bars");
+  const btn = document.getElementById("usb-poll-measure");
+  if (!hzEl || !statusEl || !bars) return;
+  if (data.type === "usb-poll-progress") {
+    hzEl.textContent = "…";
+    statusEl.textContent = "Allow admin if asked, then wiggle the sticks for 6 seconds.";
+    if (btn) btn.disabled = true;
+    return;
+  }
+  if (btn) btn.disabled = false;
+  if (data.error) {
+    hzEl.textContent = "—";
+    statusEl.textContent = data.error;
+    bars.innerHTML = "";
+    return;
+  }
+  hzEl.textContent = data.hz ? `${Math.round(data.hz)} Hz` : "—";
+  statusEl.textContent = `${data.samples || 0} USB interrupt samples`;
+  bars.innerHTML = (data.buckets || [])
+    .map(
+      (bucket) => `
+      <div class="poll-row">
+        <span>${bucket.label}</span>
+        <div class="poll-track"><div class="poll-fill" style="width:${Math.min(100, bucket.pct || 0)}%"></div></div>
+        <b>${Number(bucket.pct || 0).toFixed(1)}%</b>
+      </div>`
+    )
+    .join("");
 }
 
 function ensureConnectedUi(pad) {

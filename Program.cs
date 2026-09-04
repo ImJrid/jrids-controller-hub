@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
@@ -9,8 +10,17 @@ namespace JridsControllerHub;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
+        if (args.Length >= 1 && args[0] == "--usb-poll")
+        {
+            var output = args.Length >= 2
+                ? args[1]
+                : Path.Combine(Path.GetTempPath(), "jrids-usb-poll.json");
+            UsbKernelPoll.CaptureToFile(output, 6);
+            return;
+        }
+
         ApplicationConfiguration.Initialize();
         Application.Run(new HubForm());
     }
@@ -171,6 +181,12 @@ internal sealed class HubForm : Form
             return;
         }
 
+        if (type == "usb-poll")
+        {
+            _ = StartUsbPollAsync();
+            return;
+        }
+
         BeginInvoke(() =>
         {
             switch (type)
@@ -198,6 +214,77 @@ internal sealed class HubForm : Form
     }
 
     private bool _updateInProgress;
+    private bool _usbPollBusy;
+
+    private async Task StartUsbPollAsync()
+    {
+        if (_usbPollBusy)
+        {
+            return;
+        }
+
+        _usbPollBusy = true;
+        PostWebJson(new { type = "usb-poll-progress" });
+        var output = Path.Combine(Path.GetTempPath(), $"jrids-usb-poll-{Guid.NewGuid():N}.json");
+        try
+        {
+            if (UsbKernelPoll.IsAdministrator())
+            {
+                await Task.Run(() => UsbKernelPoll.CaptureToFile(output, 6));
+            }
+            else
+            {
+                var exe = Environment.ProcessPath ?? Application.ExecutablePath;
+                var start = new ProcessStartInfo
+                {
+                    FileName = exe,
+                    Arguments = $"--usb-poll \"{output}\"",
+                    UseShellExecute = true,
+                    Verb = "runas",
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+                using var process = Process.Start(start);
+                if (process is null)
+                {
+                    PostWebJson(new { type = "usb-poll-result", error = "Could not start the USB capture." });
+                    return;
+                }
+
+                await process.WaitForExitAsync();
+            }
+
+            if (!File.Exists(output))
+            {
+                PostWebJson(new { type = "usb-poll-result", error = "Capture did not finish. Allow the admin prompt and keep the pad plugged in." });
+                return;
+            }
+
+            var payload = System.Text.Json.Nodes.JsonNode.Parse(await File.ReadAllTextAsync(output))!.AsObject();
+            payload["type"] = "usb-poll-result";
+            var json = payload.ToJsonString();
+            BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(json));
+        }
+        catch (Win32Exception)
+        {
+            PostWebJson(new { type = "usb-poll-result", error = "Admin prompt was cancelled. Kernel USB 8K capture needs administrator." });
+        }
+        catch (Exception ex)
+        {
+            PostWebJson(new { type = "usb-poll-result", error = ex.Message });
+        }
+        finally
+        {
+            _usbPollBusy = false;
+            try
+            {
+                File.Delete(output);
+            }
+            catch
+            {
+                // Ignore leftover temp JSON.
+            }
+        }
+    }
 
     private async Task CheckForUpdatesAsync(bool apply)
     {
