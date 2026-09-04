@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
@@ -182,8 +183,8 @@ internal sealed class HubForm : Form
                         ? FormWindowState.Normal
                         : FormWindowState.Maximized;
                     break;
-                case "close":
-                    Close();
+                case "uninstall":
+                    StartUninstall();
                     break;
                 case "drag":
                     ReleaseCapture();
@@ -212,6 +213,82 @@ internal sealed class HubForm : Form
             const string payload = """{"type":"update-result","error":"offline"}""";
             BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(payload));
         }
+    }
+
+    private void StartUninstall()
+    {
+        var uninstaller = FindUninstaller();
+        if (uninstaller is null)
+        {
+            MessageBox.Show(
+                this,
+                "This copy wasn't installed with Setup. Run JridsControllerHubSetup.exe and choose Uninstall, or delete the app folder.",
+                "Uninstall",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo(uninstaller) { UseShellExecute = true });
+        Close();
+    }
+
+    private static string? FindUninstaller()
+    {
+        try
+        {
+            var local = Directory.GetFiles(AppContext.BaseDirectory, "unins*.exe")
+                .FirstOrDefault(file => Path.GetFileName(file).StartsWith("unins", StringComparison.OrdinalIgnoreCase));
+            if (local is not null)
+            {
+                return local;
+            }
+        }
+        catch
+        {
+            // Portable copies have no Inno uninstaller beside the exe.
+        }
+
+        const string keyPath = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\{8F3C2A91-4B6E-4D1A-9C7F-2E5A8B0D1C44}_is1";
+        foreach (var hive in new[] { Registry.CurrentUser, Registry.LocalMachine })
+        {
+            try
+            {
+                using var key = hive.OpenSubKey(keyPath);
+                var parsed = ParseUninstallPath(key?.GetValue("UninstallString") as string);
+                if (parsed is not null && File.Exists(parsed))
+                {
+                    return parsed;
+                }
+            }
+            catch
+            {
+                // Try the other hive.
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ParseUninstallPath(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        value = value.Trim();
+        if (value.StartsWith('"'))
+        {
+            var end = value.IndexOf('"', 1);
+            if (end > 1)
+            {
+                return value[1..end];
+            }
+        }
+
+        var exe = value.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+        return exe >= 0 ? value[..(exe + 4)].Trim('"') : null;
     }
 
     private static void OpenExternal(string url)

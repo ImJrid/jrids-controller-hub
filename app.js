@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.2";
+const APP_VERSION = "1.0.3";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -285,6 +285,9 @@ window.chrome?.webview?.addEventListener("message", (event) => {
 });
 
 document.getElementById("update-check")?.addEventListener("click", () => checkForUpdates());
+document.getElementById("uninstall-app")?.addEventListener("click", () => {
+  window.chrome?.webview?.postMessage({ type: "uninstall" });
+});
 const versionLabel = document.getElementById("app-version");
 if (versionLabel) versionLabel.textContent = `Version ${APP_VERSION}`;
 checkForUpdates();
