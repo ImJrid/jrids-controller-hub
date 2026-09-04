@@ -240,7 +240,7 @@ internal static class UsbKernelPoll
                 label = edge.Label,
                 count = counts[i],
                 pct = Math.Round(100.0 * counts[i] / total, 1),
-                bar = (int)Math.Round(40.0 * counts[i] / maxCount)
+                bar = (int)Math.Round(56.0 * counts[i] / maxCount)
             })
             .ToArray();
     }

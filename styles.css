@@ -457,6 +457,12 @@ h1 {
   filter: brightness(1.08);
 }
 
+.launch-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+  filter: none;
+}
+
 .launch-art {
   background:
     radial-gradient(circle at 70% 40%, var(--glow), transparent 45%),
@@ -1268,6 +1274,7 @@ h1 {
   bottom: 0;
   width: 100%;
   background: var(--ht-fill);
+}
 
 .ht-controls {
   display: flex;
@@ -1299,22 +1306,41 @@ h1 {
   font-weight: 600;
 }
 
+#view-usbpoll.active {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 140px);
+}
+
 .usb-poll-card {
   margin-top: 16px;
-  padding: 18px 20px;
-  background: #0b0c0e;
+  padding: 22px 24px;
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.usb-poll-card .launch-actions {
+  margin-top: 8px;
 }
 
 .poll-graph {
-  margin: 0 0 16px;
-  padding: 18px 20px;
+  margin: 0 0 18px;
+  padding: 22px 24px;
+  min-height: 460px;
+  flex: 1;
   overflow: auto;
   font-family: Consolas, "Cascadia Mono", "Courier New", monospace;
-  font-size: 13px;
-  line-height: 1.45;
-  color: #d7dbdf;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   white-space: pre;
 }
 

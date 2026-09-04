@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.10";
+const APP_VERSION = "1.0.11";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -504,10 +504,10 @@ function applyUsbPoll(data) {
     const width = Number(bucket.bar);
     const hashes = Number.isFinite(width)
       ? Math.max(0, width)
-      : Math.round((40 * (Number(bucket.pct) || 0)) / maxPct);
+      : Math.round((56 * (Number(bucket.pct) || 0)) / maxPct);
     const bar = "#".repeat(hashes);
     const pct = Number(bucket.pct || 0).toFixed(1).padStart(5, " ");
-    return `${String(bucket.label).padEnd(11)} ${bar.padEnd(40)} ${pct}%`;
+    return `${String(bucket.label).padEnd(11)} ${bar.padEnd(56)} ${pct}%`;
   });
   const hz = Math.round(data.hz || 0);
   const samples = Number(data.samples || 0).toLocaleString();
