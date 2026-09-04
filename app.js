@@ -244,8 +244,13 @@ function btnVal(pad, i) {
   return pad?.buttons?.[i]?.value || 0;
 }
 
+function testerDark() {
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
 function ink(v) {
-  return `rgba(0,0,0,${Math.max(0, Math.min(1, v))})`;
+  const a = Math.max(0, Math.min(1, v));
+  return testerDark() ? `rgba(242, 244, 247, ${a})` : `rgba(0, 0, 0, ${a})`;
 }
 
 function controllerSvg() {
@@ -262,39 +267,39 @@ function controllerSvg() {
     x: "M313.335 148.113C310.21 144.989 304.997 144.966 303.014 148.914C302.743 149.455 302.491 150.006 302.258 150.566C301.002 153.6 300.355 156.851 300.355 160.134C300.355 163.417 301.002 166.668 302.258 169.701C302.491 170.261 302.743 170.812 303.014 171.353C304.997 175.301 310.21 175.279 313.335 172.154L319.698 165.79C322.823 162.666 322.823 157.601 319.698 154.477L313.335 148.113Z",
   };
   return `<svg class="controller-svg" viewBox="0 0 441 403" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="${outline}" fill="hsl(210,50%,85%)" fill-opacity="0.3"/>
-    <path d="${outline}" fill="#fff" stroke="hsl(210,50%,85%)" stroke-width="3"/>
-    <circle cx="166" cy="238" r="37.5" stroke="hsl(210,50%,85%)" stroke-width="3"/>
-    <circle cx="329" cy="160" r="37.5" stroke="hsl(210,50%,85%)" stroke-width="3"/>
+    <path class="pad-glow" d="${outline}"/>
+    <path class="pad-body" d="${outline}"/>
+    <circle class="pad-ring" cx="166" cy="238" r="37.5"/>
+    <circle class="pad-ring" cx="329" cy="160" r="37.5"/>
     <g id="lstick-well">
-      <circle cx="113" cy="160" r="37.5" stroke="hsl(210,50%,85%)" stroke-width="3"/>
-      <circle id="lstick" cx="113" cy="160" r="28" fill="none" stroke="#000" stroke-width="3"/>
-      <circle id="lstick-dot" cx="113" cy="160" r="7" fill="#111"/>
+      <circle class="pad-ring" cx="113" cy="160" r="37.5"/>
+      <circle id="lstick" class="pad-ctrl" cx="113" cy="160" r="28" fill="none"/>
+      <circle id="lstick-dot" cx="113" cy="160" r="7"/>
     </g>
     <g id="rstick-well">
-      <circle cx="278" cy="238" r="37.5" stroke="hsl(210,50%,85%)" stroke-width="3"/>
-      <circle id="rstick" cx="278" cy="238" r="28" fill="none" stroke="#000" stroke-width="3"/>
-      <circle id="rstick-dot" cx="278" cy="238" r="7" fill="#111"/>
+      <circle class="pad-ring" cx="278" cy="238" r="37.5"/>
+      <circle id="rstick" class="pad-ctrl" cx="278" cy="238" r="28" fill="none"/>
+      <circle id="rstick-dot" cx="278" cy="238" r="7"/>
     </g>
     <g id="dpad">
-      <path data-btn="12" d="${petal.up}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-      <path data-btn="15" d="${petal.right}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-      <path data-btn="13" d="${petal.down}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-      <path data-btn="14" d="${petal.left}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
+      <path class="pad-ctrl" data-btn="12" d="${petal.up}"/>
+      <path class="pad-ctrl" data-btn="15" d="${petal.right}"/>
+      <path class="pad-ctrl" data-btn="13" d="${petal.down}"/>
+      <path class="pad-ctrl" data-btn="14" d="${petal.left}"/>
     </g>
-    <path data-btn="3" d="${petal.y}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <path data-btn="1" d="${petal.b}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <path data-btn="0" d="${petal.a}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <path data-btn="2" d="${petal.x}" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <circle data-btn="8" cx="185" cy="162" r="10" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <circle data-btn="9" cx="259" cy="162" r="10" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <circle data-btn="16" cx="222" cy="162" r="8" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <rect data-btn="4" x="111.5" y="61.5" width="41" height="13" rx="6.5" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <rect data-btn="5" x="289.5" y="61.5" width="41" height="13" rx="6.5" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <path data-btn="6" d="M152.5 37C152.5 41.1421 149.142 44.5 145 44.5H132C127.858 44.5 124.5 41.1421 124.5 37V16.5C124.5 8.76801 130.768 2.5 138.5 2.5C146.232 2.5 152.5 8.76801 152.5 16.5V37Z" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <path data-btn="7" d="M317.5 37C317.5 41.1421 314.142 44.5 310 44.5H297C292.858 44.5 289.5 41.1421 289.5 37V16.5C289.5 8.76801 295.768 2.5 303.5 2.5C311.232 2.5 317.5 8.76801 317.5 16.5V37Z" fill="rgba(0,0,0,0)" stroke="#000" stroke-width="3"/>
-    <line x1="30" y1="210" x2="130" y2="300" stroke="hsl(210,50%,85%)" stroke-width="3" opacity="0.3"/>
-    <line x1="411" y1="210" x2="311" y2="300" stroke="hsl(210,50%,85%)" stroke-width="3" opacity="0.3"/>
+    <path class="pad-ctrl" data-btn="3" d="${petal.y}"/>
+    <path class="pad-ctrl" data-btn="1" d="${petal.b}"/>
+    <path class="pad-ctrl" data-btn="0" d="${petal.a}"/>
+    <path class="pad-ctrl" data-btn="2" d="${petal.x}"/>
+    <circle class="pad-ctrl" data-btn="8" cx="185" cy="162" r="10"/>
+    <circle class="pad-ctrl" data-btn="9" cx="259" cy="162" r="10"/>
+    <circle class="pad-ctrl" data-btn="16" cx="222" cy="162" r="8"/>
+    <rect class="pad-ctrl" data-btn="4" x="111.5" y="61.5" width="41" height="13" rx="6.5"/>
+    <rect class="pad-ctrl" data-btn="5" x="289.5" y="61.5" width="41" height="13" rx="6.5"/>
+    <path class="pad-ctrl" data-btn="6" d="M152.5 37C152.5 41.1421 149.142 44.5 145 44.5H132C127.858 44.5 124.5 41.1421 124.5 37V16.5C124.5 8.76801 130.768 2.5 138.5 2.5C146.232 2.5 152.5 8.76801 152.5 16.5V37Z"/>
+    <path class="pad-ctrl" data-btn="7" d="M317.5 37C317.5 41.1421 314.142 44.5 310 44.5H297C292.858 44.5 289.5 41.1421 289.5 37V16.5C289.5 8.76801 295.768 2.5 303.5 2.5C311.232 2.5 317.5 8.76801 317.5 16.5V37Z"/>
+    <line class="pad-seam" x1="30" y1="210" x2="130" y2="300"/>
+    <line class="pad-seam" x1="411" y1="210" x2="311" y2="300"/>
   </svg>`;
 }
 
@@ -473,7 +478,7 @@ function drawCircularity(canvas, map, x, y, errorEl) {
   const scale = Math.min(w, h) * 0.47;
   ctx.clearRect(0, 0, w, h);
 
-  ctx.strokeStyle = "hsla(210,90%,20%,0.25)";
+  ctx.strokeStyle = testerDark() ? "rgba(255,255,255,0.28)" : "hsla(210,90%,20%,0.25)";
   ctx.beginPath();
   ctx.arc(cx, cy, scale, 0, Math.PI * 2);
   ctx.stroke();
@@ -500,7 +505,7 @@ function drawCircularity(canvas, map, x, y, errorEl) {
     ctx.fill();
   });
 
-  ctx.fillStyle = "hsl(210,90%,20%)";
+  ctx.fillStyle = testerDark() ? "#f2f4f7" : "hsl(210,90%,20%)";
   ctx.beginPath();
   ctx.arc(cx + x * scale, cy + y * scale, 4, 0, Math.PI * 2);
   ctx.fill();

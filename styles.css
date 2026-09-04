@@ -805,30 +805,94 @@ h1 {
 }
 
 .ht-card {
-  background: #fff;
-  color: hsl(210, 90%, 16%);
-  border: 1px solid #e6eef5;
+  --ht-bg: #fff;
+  --ht-slot: #f4f7fa;
+  --ht-text: hsl(210, 90%, 16%);
+  --ht-muted: hsla(210, 90%, 20%, 0.55);
+  --ht-line: #e6eef5;
+  --ht-art: hsl(210, 50%, 85%);
+  --ht-pad: #fff;
+  --ht-ink: #111;
+  --ht-bar: hsla(210, 90%, 20%, 0.08);
+  --ht-fill: hsla(210, 90%, 20%, 0.45);
+  --ht-btn: hsla(210, 90%, 20%, 0.06);
+  --ht-ctrl: hsla(210, 90%, 20%, 0.1);
+  color-scheme: light;
+  background: var(--ht-bg);
+  color: var(--ht-text);
+  border: 1px solid var(--ht-line);
   border-radius: 8px;
   overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ht-card {
+    --ht-bg: #1b1f24;
+    --ht-slot: #14181c;
+    --ht-text: #e8eaed;
+    --ht-muted: rgba(232, 234, 237, 0.55);
+    --ht-line: #2c333c;
+    --ht-art: hsl(210, 25%, 42%);
+    --ht-pad: #22282f;
+    --ht-ink: #f2f4f7;
+    --ht-bar: rgba(255, 255, 255, 0.1);
+    --ht-fill: rgba(255, 255, 255, 0.4);
+    --ht-btn: rgba(255, 255, 255, 0.06);
+    --ht-ctrl: rgba(255, 255, 255, 0.1);
+    color-scheme: dark;
+  }
+}
+
+.controller-svg .pad-glow {
+  fill: var(--ht-art);
+  fill-opacity: 0.3;
+}
+
+.controller-svg .pad-body {
+  fill: var(--ht-pad);
+  stroke: var(--ht-art);
+  stroke-width: 3;
+}
+
+.controller-svg .pad-ring {
+  fill: none;
+  stroke: var(--ht-art);
+  stroke-width: 3;
+}
+
+.controller-svg .pad-ctrl {
+  stroke: var(--ht-ink);
+  stroke-width: 3;
+}
+
+.controller-svg .pad-seam {
+  stroke: var(--ht-art);
+  stroke-width: 3;
+  opacity: 0.3;
+}
+
+.controller-svg #lstick-dot,
+.controller-svg #rstick-dot {
+  fill: var(--ht-ink);
 }
 
 .ht-slots {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  background: #f4f7fa;
-  border-bottom: 1px solid #e6eef5;
+  background: var(--ht-slot);
+  border-bottom: 1px solid var(--ht-line);
 }
 
 .ht-slot {
   border: 0;
   background: transparent;
-  color: hsl(210, 90%, 20%, 0.55);
+  color: var(--ht-muted);
   padding: 14px 12px;
   font-size: 12px;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
-  border-right: 1px solid #e6eef5;
+  border-right: 1px solid var(--ht-line);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -839,19 +903,19 @@ h1 {
 }
 
 .ht-slot.active {
-  background: #fff;
-  color: hsl(210, 90%, 16%);
+  background: var(--ht-bg);
+  color: var(--ht-text);
   box-shadow: none;
 }
 
 .ht-slot.live {
-  color: hsl(210, 90%, 16%);
+  color: var(--ht-text);
 }
 
 .ht-body {
   padding: 22px 24px 28px;
   min-height: 420px;
-  background: #fff;
+  background: var(--ht-bg);
 }
 
 .ht-empty {
@@ -869,7 +933,7 @@ h1 {
 .ht-empty p {
   margin: 0;
   font-size: 22px;
-  color: hsl(210, 90%, 20%, 0.7);
+  color: var(--ht-muted);
 }
 
 .ht-connected {
@@ -886,12 +950,12 @@ h1 {
 .ht-name {
   margin: 0;
   font-size: 26px;
-  color: hsl(210, 90%, 16%);
+  color: var(--ht-text);
 }
 
 .ht-sub {
   margin: 2px 0 0;
-  color: hsl(210, 90%, 20%, 0.5);
+  color: var(--ht-muted);
 }
 
 .controller-svg {
@@ -906,7 +970,7 @@ h1 {
   flex-wrap: wrap;
   gap: 10px 18px;
   font-size: 11px;
-  color: hsl(210, 90%, 20%, 0.55);
+  color: var(--ht-muted);
   margin: 16px 0 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -914,7 +978,7 @@ h1 {
 
 .ht-stats b {
   display: block;
-  color: hsl(210, 90%, 16%);
+  color: var(--ht-text);
   font-weight: 700;
   font-size: 14px;
   text-transform: none;
@@ -945,12 +1009,12 @@ h1 {
   margin: 0 0 6px;
   font-size: 11px;
   letter-spacing: 0.08em;
-  color: hsl(210, 90%, 20%, 0.55);
+  color: var(--ht-muted);
 }
 
 .circ-axes {
   font-size: 11px;
-  color: hsl(210, 90%, 20%, 0.55);
+  color: var(--ht-muted);
   font-variant-numeric: tabular-nums;
   line-height: 1.45;
 }
@@ -979,7 +1043,7 @@ h1 {
   inset: 0;
   display: grid;
   place-content: center;
-  color: hsl(210, 90%, 16%);
+  color: var(--ht-text);
   font-weight: 700;
   pointer-events: none;
   text-shadow: none;
@@ -998,8 +1062,8 @@ h1 {
 
 .circ-btn {
   border: 0;
-  background: hsla(210, 90%, 20%, 0.1);
-  color: #333;
+  background: var(--ht-ctrl);
+  color: var(--ht-text);
   border-radius: 5px;
   padding: 8px 12px;
   font-weight: 600;
@@ -1014,7 +1078,7 @@ h1 {
 }
 
 .circ-help {
-  color: hsl(210, 90%, 20%, 0.55);
+  color: var(--ht-muted);
   font-size: 13px;
   margin-left: 4px;
 }
@@ -1076,13 +1140,13 @@ h1 {
   gap: 8px;
   align-items: center;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--ht-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .ht-axis .track {
   height: 14px;
-  background: hsla(210, 90%, 20%, 0.08);
+  background: var(--ht-bar);
   border: 0;
   border-radius: 3px;
   position: relative;
@@ -1095,14 +1159,14 @@ h1 {
   top: 0;
   width: 1px;
   height: 100%;
-  background: var(--line);
+  background: var(--ht-line);
 }
 
 .ht-axis .fill {
   position: absolute;
   top: 0;
   height: 100%;
-  background: hsla(210, 90%, 20%, 0.55);
+  background: var(--ht-fill);
 }
 
 .ht-buttons {
@@ -1116,8 +1180,8 @@ h1 {
   min-height: 42px;
   border: 0;
   border-radius: 4px;
-  background: hsla(210, 90%, 20%, 0.06);
-  color: hsl(210, 90%, 20%, 0.55);
+  background: var(--ht-btn);
+  color: var(--ht-muted);
   font-size: 11px;
   display: grid;
   place-items: center;
@@ -1141,9 +1205,7 @@ h1 {
   left: 0;
   bottom: 0;
   width: 100%;
-  background: hsla(210, 90%, 20%, 0.45);
-  opacity: 1;
-}
+  background: var(--ht-fill);
 
 .ht-controls {
   display: flex;
@@ -1158,7 +1220,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted);
+  color: var(--ht-muted);
 }
 
 .ht-controls input[type="range"] {
@@ -1167,8 +1229,8 @@ h1 {
 
 .ht-controls button {
   border: 0;
-  background: hsla(210, 90%, 20%, 0.1);
-  color: #333;
+  background: var(--ht-ctrl);
+  color: var(--ht-text);
   border-radius: 5px;
   padding: 8px 12px;
   cursor: pointer;
