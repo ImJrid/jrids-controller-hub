@@ -164,6 +164,12 @@ internal sealed class HubForm : Form
             return;
         }
 
+        if (type == "check-update")
+        {
+            _ = CheckForUpdatesAsync();
+            return;
+        }
+
         BeginInvoke(() =>
         {
             switch (type)
@@ -185,6 +191,27 @@ internal sealed class HubForm : Form
                     break;
             }
         });
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
+            http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "JridsControllerHub");
+            http.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/vnd.github+json");
+            var json = await http.GetStringAsync("https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest");
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
+            var html = doc.RootElement.GetProperty("html_url").GetString() ?? "";
+            var payload = System.Text.Json.JsonSerializer.Serialize(new { type = "update-result", tag, html });
+            BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(payload));
+        }
+        catch
+        {
+            const string payload = """{"type":"update-result","error":"offline"}""";
+            BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(payload));
+        }
     }
 
     private static void OpenExternal(string url)

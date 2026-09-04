@@ -740,6 +740,62 @@ h1 {
   margin: 4px 0 0 !important;
 }
 
+.about-version {
+  margin: 6px 0 0 !important;
+  font-size: 13px;
+}
+
+.update-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 10px;
+}
+
+.update-btn {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.update-link {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.update-status {
+  margin: 0 0 16px !important;
+}
+
+.update-status.ok {
+  color: #2ecc71 !important;
+}
+
+.update-status.warn {
+  color: var(--accent) !important;
+}
+
+.nav-settings.has-update {
+  position: relative;
+}
+
+.nav-settings.has-update::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 .socials {
   display: grid;
   gap: 10px;

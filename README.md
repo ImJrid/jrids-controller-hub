@@ -8,6 +8,8 @@ Windows launcher and gamepad tester created by [Jrids](https://x.com/imjrid).
 2. Run the installer.
 3. Open **Jrids Controller Hub** from the Start menu.
 
+In the app, open **Settings** and use **Check for updates**.
+
 Windows 10/11 64-bit. If Windows shows **Windows protected your PC**, choose **More info** → **Run anyway** (the app is not code-signed yet).
 
 You can also run `release/Jrids Controller Hub.exe` without installing.

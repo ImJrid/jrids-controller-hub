@@ -1,5 +1,8 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
+const APP_VERSION = "1.0.1";
+const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
+const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
 const BG_PRESETS = ["#0b0c0e", "#121826", "#1a1220", "#101610", "#1a1410", "#e8eaed"];
 
@@ -208,6 +211,83 @@ document.querySelectorAll("#bg-color, #bg-color-settings").forEach((input) => {
 
 applyTheme(localStorage.getItem(THEME_KEY) || "#e10600");
 applyBackground(localStorage.getItem(BG_KEY) || "#0b0c0e");
+
+function versionParts(value) {
+  return String(value || "")
+    .replace(/^v/i, "")
+    .split(/[^\d]+/)
+    .filter(Boolean)
+    .map((part) => Number(part) || 0);
+}
+
+function versionNewer(latest, current) {
+  const left = versionParts(latest);
+  const right = versionParts(current);
+  const count = Math.max(left.length, right.length);
+  for (let i = 0; i < count; i += 1) {
+    if ((left[i] || 0) > (right[i] || 0)) return true;
+    if ((left[i] || 0) < (right[i] || 0)) return false;
+  }
+  return false;
+}
+
+function setUpdateUi({ latest, url, error, checking } = {}) {
+  const status = document.getElementById("update-status");
+  const link = document.getElementById("update-open");
+  const settingsNav = document.querySelector(".nav-settings");
+  if (!status || !link) return;
+  status.classList.remove("ok", "warn");
+  if (checking) {
+    status.textContent = "Checking for updates...";
+    return;
+  }
+  if (error) {
+    status.textContent = "Couldn't check right now. You can still open GitHub.";
+    link.hidden = false;
+    link.href = UPDATE_PAGE;
+    return;
+  }
+  if (versionNewer(latest, APP_VERSION)) {
+    status.textContent = `Version ${String(latest).replace(/^v/i, "")} is available.`;
+    status.classList.add("warn");
+    link.hidden = false;
+    link.href = url || UPDATE_PAGE;
+    settingsNav?.classList.add("has-update");
+    return;
+  }
+  status.textContent = "You're on the latest version.";
+  status.classList.add("ok");
+  link.hidden = true;
+  settingsNav?.classList.remove("has-update");
+}
+
+async function checkForUpdates() {
+  setUpdateUi({ checking: true });
+  try {
+    const response = await fetch(UPDATE_API, { headers: { Accept: "application/vnd.github+json" } });
+    if (!response.ok) throw new Error("update check failed");
+    const data = await response.json();
+    setUpdateUi({ latest: data.tag_name, url: data.html_url });
+  } catch {
+    if (window.chrome?.webview) {
+      window.chrome.webview.postMessage({ type: "check-update" });
+      return;
+    }
+    setUpdateUi({ error: true });
+  }
+}
+
+window.chrome?.webview?.addEventListener("message", (event) => {
+  const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+  if (data?.type !== "update-result") return;
+  if (data.error) setUpdateUi({ error: true });
+  else setUpdateUi({ latest: data.tag, url: data.html });
+});
+
+document.getElementById("update-check")?.addEventListener("click", () => checkForUpdates());
+const versionLabel = document.getElementById("app-version");
+if (versionLabel) versionLabel.textContent = `Version ${APP_VERSION}`;
+checkForUpdates();
 
 function updateClock() {
   document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {
