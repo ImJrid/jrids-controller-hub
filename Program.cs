@@ -165,10 +165,15 @@ internal sealed class HubForm : Form
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
         string type;
+        string? toolId = null;
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(args.WebMessageAsJson);
             type = doc.RootElement.GetProperty("type").GetString() ?? "";
+            if (doc.RootElement.TryGetProperty("id", out var idEl))
+            {
+                toolId = idEl.GetString();
+            }
         }
         catch
         {
@@ -184,6 +189,12 @@ internal sealed class HubForm : Form
         if (type == "usb-poll")
         {
             _ = StartUsbPollAsync();
+            return;
+        }
+
+        if (type == "launch-tool")
+        {
+            BeginInvoke(() => LaunchBundledTool(toolId));
             return;
         }
 
@@ -336,6 +347,28 @@ internal sealed class HubForm : Form
     {
         var json = System.Text.Json.JsonSerializer.Serialize(payload);
         BeginInvoke(() => _webView.CoreWebView2.PostWebMessageAsJson(json));
+    }
+
+    private void LaunchBundledTool(string? id)
+    {
+        if (!string.Equals(id, "usb-cache-cleaner", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var path = Path.Combine(AppContext.BaseDirectory, "UsbCacheCleaner.exe");
+        if (!File.Exists(path))
+        {
+            MessageBox.Show(
+                this,
+                "USB Cache Cleaner is missing from the install folder. Reinstall Jrids Controller Hub with Setup.",
+                "Suiovoi",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
     }
 
     private bool CanInstallUpdate() => FindUninstaller() is not null && !Debugger.IsAttached;

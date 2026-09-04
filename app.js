@@ -1,6 +1,6 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.13";
+const APP_VERSION = "1.0.14";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -31,6 +31,12 @@ const TOOLS = {
     url: "https://sy2.suiovoi.cc/",
     logo: "assets/suiovoi-logo.png",
     logoClass: "",
+    helper: {
+      title: "USB Cache Cleaner",
+      blurb: "You don't need this if the web driver connects. Only run it if you can't connect.",
+      tool: "usb-cache-cleaner",
+      button: "Run USB Cache Cleaner",
+    },
   },
   marius: {
     title: "Marius",
@@ -152,6 +158,14 @@ function renderLaunchView(id) {
           <button class="launch-btn" type="button" data-url="${tool.url}">Launch setup</button>
           ${tool.updateUrl ? `<button class="launch-btn alt" type="button" data-url="${tool.updateUrl}">Launch update</button>` : ""}
         </div>
+        ${tool.helper ? `
+        <div class="launch-helper">
+          <h3>${tool.helper.title}</h3>
+          <p>${tool.helper.blurb}</p>
+          <div class="launch-actions">
+            <button class="launch-btn" type="button" data-tool="${tool.helper.tool}">${tool.helper.button}</button>
+          </div>
+        </div>` : ""}
       </div>
       <div class="launch-art">${art}</div>
     </div>
@@ -197,6 +211,10 @@ document.body.addEventListener("click", (event) => {
     return;
   }
   const launch = event.target.closest(".launch-btn");
+  if (launch?.dataset.tool) {
+    window.chrome?.webview?.postMessage({ type: "launch-tool", id: launch.dataset.tool });
+    return;
+  }
   if (launch?.dataset.url) {
     window.open(launch.dataset.url, "_blank", "noopener,noreferrer");
   }

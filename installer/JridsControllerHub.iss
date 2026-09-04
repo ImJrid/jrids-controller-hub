@@ -1,5 +1,5 @@
 #define MyAppName "Jrids Controller Hub"
-#define MyAppVersion "1.0.13"
+#define MyAppVersion "1.0.14"
 #define MyAppPublisher "Jrids"
 #define MyAppURL "https://x.com/imjrid"
 #define MyAppExeName "Jrids Controller Hub.exe"
@@ -35,6 +35,7 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 
 [Files]
 Source: "..\release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\release\UsbCacheCleaner.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

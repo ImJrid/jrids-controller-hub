@@ -9,3 +9,4 @@ installer-output/
 .vs/
 *.exe
 !assets/*.ico
+!tools/UsbCacheCleaner.exe

@@ -10,7 +10,7 @@
     <RootNamespace>JridsControllerHub</RootNamespace>
     <Product>Jrids Controller Hub</Product>
     <AssemblyTitle>Jrids Controller Hub</AssemblyTitle>
-    <Version>1.0.13</Version>
+    <Version>1.0.14</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <InvariantGlobalization>true</InvariantGlobalization>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
@@ -64,6 +64,11 @@
     <Content Include="assets\xbox-layout.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>wwwroot\assets\xbox-layout.png</TargetPath>
+    </Content>
+    <Content Include="tools\UsbCacheCleaner.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>UsbCacheCleaner.exe</TargetPath>
     </Content>
   </ItemGroup>
 </Project>
