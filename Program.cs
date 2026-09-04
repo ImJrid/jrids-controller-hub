@@ -183,6 +183,9 @@ internal sealed class HubForm : Form
                         ? FormWindowState.Normal
                         : FormWindowState.Maximized;
                     break;
+                case "close":
+                    Close();
+                    break;
                 case "uninstall":
                     StartUninstall();
                     break;
