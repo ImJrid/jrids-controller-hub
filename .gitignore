@@ -1,0 +1,11 @@
+bin/
+obj/
+release/
+dist/
+dist-*/
+installer-output/
+*.user
+*.suo
+.vs/
+*.exe
+!assets/*.ico

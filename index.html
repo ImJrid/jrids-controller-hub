@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jrids Controller Hub</title>
+    <link rel="icon" href="assets/jrids-logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="titlebar">
+        <div class="titlebar-brand">
+          <img src="assets/jrids-logo.png" alt="Jrids" />
+          <span>Jrids Controller Hub</span>
+        </div>
+        <div class="titlebar-tools">
+          <div class="theme-dock" title="Accent color">
+            <span class="dock-label">Accent</span>
+            <button class="swatch" type="button" data-accent="#e10600" aria-label="Jrids red"></button>
+            <button class="swatch" type="button" data-accent="#ff9c00" aria-label="iCUE orange"></button>
+            <button class="swatch" type="button" data-accent="#ff7a18" aria-label="Firebird orange"></button>
+            <button class="swatch" type="button" data-accent="#3aa0ff" aria-label="Blue"></button>
+            <button class="swatch" type="button" data-accent="#7c5cff" aria-label="Purple"></button>
+            <button class="swatch" type="button" data-accent="#2ecc71" aria-label="Green"></button>
+            <label class="custom-color">
+              <input id="theme-color" type="color" value="#e10600" aria-label="Custom accent color" />
+            </label>
+          </div>
+          <div class="theme-dock" title="Background color">
+            <span class="dock-label">BG</span>
+            <button class="swatch bg" type="button" data-bg="#0b0c0e" aria-label="Black"></button>
+            <button class="swatch bg" type="button" data-bg="#121826" aria-label="Navy"></button>
+            <button class="swatch bg" type="button" data-bg="#1a1220" aria-label="Purple black"></button>
+            <button class="swatch bg" type="button" data-bg="#101610" aria-label="Forest"></button>
+            <button class="swatch bg" type="button" data-bg="#1a1410" aria-label="Brown"></button>
+            <button class="swatch bg" type="button" data-bg="#e8eaed" aria-label="Light"></button>
+            <label class="custom-color">
+              <input id="bg-color" type="color" value="#0b0c0e" aria-label="Custom background color" />
+            </label>
+          </div>
+        </div>
+        <div class="titlebar-actions">
+          <button class="win-btn" type="button" data-win="min" title="Minimize">—</button>
+          <button class="win-btn" type="button" data-win="max" title="Maximize">□</button>
+          <button class="win-btn close" type="button" data-win="close" title="Close">✕</button>
+        </div>
+      </header>
+
+      <div class="shell">
+        <aside class="sidebar">
+          <button class="nav-btn active" data-view="home" title="Home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" />
+            </svg>
+            <span>Home</span>
+          </button>
+          <button class="nav-btn" data-view="hyperstrike" title="Hyperstrike">
+            <img class="logo-lift" src="assets/hyperstrike-logo.png" alt="" />
+            <span>Hyperstrike</span>
+          </button>
+          <button class="nav-btn" data-view="firebird" title="Firebird">
+            <img src="assets/firebird-logo.png" alt="" />
+            <span>Firebird</span>
+          </button>
+          <button class="nav-btn" data-view="suiovoi" title="Suiovoi">
+            <img src="assets/suiovoi-logo.png" alt="" />
+            <span>Suiovoi</span>
+          </button>
+          <button class="nav-btn" data-view="marius" title="Marius">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <path d="M5 19V8l7-4 7 4v11" />
+              <path d="M9 19v-6h6v6" />
+            </svg>
+            <span>Marius</span>
+          </button>
+          <button class="nav-btn" data-view="jrids" title="Jrids">
+            <img src="assets/jrids-logo.png" alt="" />
+            <span>Jrids</span>
+          </button>
+          <button class="nav-btn nav-settings" data-view="settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.3.6.9 1 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1Z" />
+            </svg>
+            <span>Settings</span>
+          </button>
+        </aside>
+
+        <main class="content">
+          <section id="view-home" class="view active">
+            <div class="page-head">
+              <div>
+                <p class="kicker">Software</p>
+                <h1>Jrids Controller Hub</h1>
+              </div>
+              <div class="head-meta">
+                <span class="pill">DEVICES</span>
+                <span class="count" id="tile-count">5</span>
+              </div>
+            </div>
+            <div class="tile-grid">
+              <button class="tile" data-view="hyperstrike">
+                <div class="tile-glow hyper"></div>
+                <div class="tile-icon hyper">
+                  <img class="logo-lift" src="assets/hyperstrike-logo.png" alt="Hyperstrike logo" />
+                </div>
+                <div class="tile-copy">
+                  <h2>Hyperstrike</h2>
+                  <p>Launch Hyperstrike connect</p>
+                </div>
+                <span class="tile-arrow">Open</span>
+              </button>
+
+              <button class="tile" data-view="firebird">
+                <div class="tile-glow fire"></div>
+                <div class="tile-icon fire">
+                  <img src="assets/firebird-logo.png" alt="Firebird logo" />
+                </div>
+                <div class="tile-copy">
+                  <h2>Firebird</h2>
+                  <p>Open Firebird setup tool</p>
+                </div>
+                <span class="tile-arrow">Open</span>
+              </button>
+
+              <button class="tile" data-view="suiovoi">
+                <div class="tile-glow sui"></div>
+                <div class="tile-icon sui">
+                  <img src="assets/suiovoi-logo.png" alt="Suiovoi logo" />
+                </div>
+                <div class="tile-copy">
+                  <h2>Suiovoi</h2>
+                  <p>Open Suiovoi setup portal</p>
+                </div>
+                <span class="tile-arrow">Open</span>
+              </button>
+
+              <button class="tile" data-view="marius">
+                <div class="tile-glow mar"></div>
+                <div class="tile-icon mar">
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <path d="M10 38V16l14-8 14 8v22" stroke="#c9a227" stroke-width="4" />
+                    <path d="M18 38v-12h12v12" stroke="#c9a227" stroke-width="4" />
+                  </svg>
+                </div>
+                <div class="tile-copy">
+                  <h2>Marius</h2>
+                  <p>Open Marius setup &amp; update</p>
+                </div>
+                <span class="tile-arrow">Open</span>
+              </button>
+
+              <button class="tile featured" data-view="jrids">
+                <div class="tile-glow jrids"></div>
+                <div class="tile-icon jrids">
+                  <img src="assets/jrids-logo.png" alt="Jrids logo" />
+                </div>
+                <div class="tile-copy">
+                  <h2>Jrids</h2>
+                  <p>Gamepad tester</p>
+                </div>
+                <span class="tile-arrow">Test</span>
+              </button>
+            </div>
+          </section>
+
+          <section id="view-hyperstrike" class="view"></section>
+          <section id="view-firebird" class="view"></section>
+          <section id="view-suiovoi" class="view"></section>
+          <section id="view-marius" class="view"></section>
+          <section id="view-settings" class="view">
+            <div class="page-head">
+              <div>
+                <p class="kicker">Preferences</p>
+                <h1>Settings</h1>
+              </div>
+            </div>
+            <div class="settings-card">
+              <h2>App info</h2>
+              <div class="about-brand">
+                <img src="assets/jrids-logo.png" alt="Jrids" />
+                <div>
+                  <p class="about-title">Jrids Controller Hub</p>
+                  <p class="about-created">Created by Jrids</p>
+                </div>
+              </div>
+              <div class="socials">
+                <a class="social-link" href="https://x.com/imjrid" target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.74l7.727-8.835L1.254 2.25H8.08l4.253 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  <span>x.com/imjrid</span>
+                </a>
+                <a class="social-link" href="https://www.youtube.com/@imjrid" target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#FF0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8z"/><path fill="#fff" d="M9.75 15.5V8.5L15.6 12z"/></svg>
+                  <span>youtube.com/@imjrid</span>
+                </a>
+                <a class="social-link" href="https://www.twitch.tv/JrLd" target="_blank" rel="noopener noreferrer">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#9146FF" d="M3.2 0 0 5.5v16h5.5V24h3.1l3.1-2.5h4.7L22.4 16V0H3.2zm17.3 14.7-2.8 2.8h-4.7l-3.1 2.5v-2.5H5.5V2.2h15v12.5z"/><path fill="#fff" d="M17.7 6.2h-1.9v5.3h1.9V6.2zm-5.2 0H10.6v5.3h1.9V6.2z"/></svg>
+                  <span>twitch.com/JrLd</span>
+                </a>
+              </div>
+            </div>
+            <div class="settings-card">
+              <h2>Theme color</h2>
+              <p>Pick an accent for buttons, highlights, and glows. Your choice is saved on this PC.</p>
+              <div class="theme-grid" id="settings-swatches"></div>
+              <label class="custom-row">
+                Custom accent
+                <input id="theme-color-settings" type="color" value="#e10600" />
+              </label>
+            </div>
+            <div class="settings-card">
+              <h2>Background</h2>
+              <p>Change the app background. Light and dark both work.</p>
+              <div class="theme-grid" id="settings-bg-swatches"></div>
+              <label class="custom-row">
+                Custom background
+                <input id="bg-color-settings" type="color" value="#0b0c0e" />
+              </label>
+            </div>
+          </section>
+
+          <section id="view-jrids" class="view">
+            <div class="page-head">
+              <div class="page-head-row">
+                <img class="page-logo" src="assets/jrids-logo.png" alt="Jrids" />
+                <div>
+                  <p class="kicker">Gamepad Tester</p>
+                  <h1>Jrids</h1>
+                </div>
+              </div>
+              <div class="head-meta">
+                <span class="status-dot" id="pad-status-dot"></span>
+                <span id="pad-status-text">Connect your gamepad and press buttons to begin...</span>
+              </div>
+            </div>
+
+            <div class="ht-card">
+              <div class="ht-slots" id="ht-slots"></div>
+              <div class="ht-body" id="ht-body"></div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <footer class="statusbar">
+        <span>Jrids Controller Hub · Created by Jrids</span>
+        <span id="clock"></span>
+      </footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
