@@ -356,7 +356,9 @@ internal sealed class HubForm : Form
             return;
         }
 
-        var path = Path.Combine(AppContext.BaseDirectory, "UsbCacheCleaner.exe");
+        var dir = Path.GetDirectoryName(Environment.ProcessPath ?? Application.ExecutablePath)
+            ?? AppContext.BaseDirectory;
+        var path = Path.Combine(dir, "UsbCacheCleaner.exe");
         if (!File.Exists(path))
         {
             MessageBox.Show(

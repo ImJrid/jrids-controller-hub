@@ -67,8 +67,13 @@
     </Content>
     <Content Include="tools\UsbCacheCleaner.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <TargetPath>UsbCacheCleaner.exe</TargetPath>
     </Content>
   </ItemGroup>
+
+  <Target Name="CopyUsbCacheCleanerOnPublish" AfterTargets="Publish">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\tools\UsbCacheCleaner.exe" DestinationFiles="$(PublishDir)UsbCacheCleaner.exe" />
+  </Target>
 </Project>
