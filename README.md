@@ -10,6 +10,10 @@ Windows launcher and gamepad tester created by [Jrids](https://x.com/imjrid).
 
 ![Jrids gamepad tester](docs/screenshots/tester.png)
 
+**8K Poll**
+
+![Jrids 8K poll rate](docs/screenshots/usbpoll.png)
+
 **Controller Sellers**
 
 ![Jrids Controller Hub sellers](docs/screenshots/sellers.png)
