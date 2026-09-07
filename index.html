@@ -235,7 +235,7 @@
                 <div>
                   <p class="about-title">Jrids Controller Hub</p>
                   <p class="about-created">Created by Jrids</p>
-                  <p class="about-version" id="app-version">Version 1.0.17</p>
+                  <p class="about-version" id="app-version">Version 1.0.18</p>
                 </div>
               </div>
               <div class="update-row">
@@ -270,12 +270,20 @@
             </div>
             <div class="settings-card">
               <h2>Background</h2>
-              <p>Change the app background. Light and dark both work.</p>
+              <p>Use a solid color or a photo. Pick a color to go back to a solid background.</p>
               <div class="theme-grid" id="settings-bg-swatches"></div>
               <label class="custom-row">
-                Custom background
+                Custom color
                 <input id="bg-color-settings" type="color" value="#0b0c0e" />
               </label>
+              <div class="bg-photo-row">
+                <label class="launch-btn alt photo-pick">
+                  <input id="bg-photo-settings" type="file" accept="image/*" />
+                  Choose photo
+                </label>
+                <button class="launch-btn alt bg-photo-clear" id="bg-photo-clear" type="button">Remove background</button>
+              </div>
+              <p class="update-hint" id="bg-photo-status"></p>
             </div>
           </section>
 

@@ -36,10 +36,19 @@ button {
   height: 100%;
   display: grid;
   grid-template-rows: 42px 1fr 28px;
-  background:
-    radial-gradient(1200px 500px at 10% -10%, rgba(var(--accent-rgb), 0.14), transparent 50%),
-    var(--bg);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1200px 500px at 10% -10%, rgba(var(--accent-rgb), 0.14), transparent 50%);
   border: 1px solid var(--line);
+}
+
+.app.has-photo {
+  background-image:
+    linear-gradient(rgba(8, 10, 12, 0.55), rgba(8, 10, 12, 0.62)),
+    var(--bg-photo);
+  background-size: cover, cover;
+  background-position: center, center;
+  background-repeat: no-repeat;
 }
 
 .titlebar {
@@ -107,6 +116,39 @@ button {
   padding: 0;
   cursor: pointer;
   background: #222;
+}
+
+.theme-dock .photo-pick {
+  position: relative;
+  overflow: hidden;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 2px 6px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.photo-pick input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.bg-photo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.launch-btn.alt.photo-pick {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
 }
 
 .swatch[data-accent="#e10600"] { background: #e10600; }

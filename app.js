@@ -1,6 +1,7 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
-const APP_VERSION = "1.0.17";
+const BG_PHOTO_KEY = "jrids-bg-photo";
+const APP_VERSION = "1.0.18";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -92,7 +93,7 @@ function applyTheme(hex) {
   });
 }
 
-function applyBackground(hex) {
+function applyBackground(hex, { keepPhoto = false } = {}) {
   const color = hex.startsWith("#") ? hex : `#${hex}`;
   const rgb = hexToRgb(color);
   const light = luminance(rgb) > 0.45;
@@ -113,6 +114,78 @@ function applyBackground(hex) {
   document.querySelectorAll("[data-bg]").forEach((swatch) => {
     swatch.classList.toggle("active", swatch.dataset.bg?.toLowerCase() === color.toLowerCase());
   });
+  if (!keepPhoto) {
+    applyBackgroundPhoto("");
+  }
+}
+
+function applyBackgroundPhoto(dataUrl) {
+  const photo = dataUrl || "";
+  const root = document.documentElement;
+  const app = document.querySelector(".app");
+  if (photo) {
+    root.style.setProperty("--bg-photo", `url("${photo}")`);
+    app?.classList.add("has-photo");
+    try {
+      localStorage.setItem(BG_PHOTO_KEY, photo);
+    } catch {
+      applyBackgroundPhoto("");
+      const status = document.getElementById("bg-photo-status");
+      if (status) status.textContent = "That photo is too large. Try a smaller image.";
+      return;
+    }
+  } else {
+    root.style.setProperty("--bg-photo", "none");
+    app?.classList.remove("has-photo");
+    localStorage.removeItem(BG_PHOTO_KEY);
+  }
+  const clearBtn = document.getElementById("bg-photo-clear");
+  if (clearBtn) clearBtn.disabled = !photo;
+  const status = document.getElementById("bg-photo-status");
+  if (status) status.textContent = photo ? "Using a photo background." : "";
+}
+
+function compressBackgroundPhoto(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const blobUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1600;
+      let width = img.width;
+      let height = img.height;
+      if (width > max) {
+        height = Math.round((height * max) / width);
+        width = max;
+      }
+      if (height > max) {
+        width = Math.round((width * max) / height);
+        height = max;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(blobUrl);
+      resolve(canvas.toDataURL("image/jpeg", 0.78));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(blobUrl);
+      reject(new Error("Could not read that image."));
+    };
+    img.src = blobUrl;
+  });
+}
+
+async function onBackgroundPhotoPicked(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  const status = document.getElementById("bg-photo-status");
+  if (status) status.textContent = "Loading photo...";
+  try {
+    const dataUrl = await compressBackgroundPhoto(file);
+    applyBackgroundPhoto(dataUrl);
+  } catch {
+    if (status) status.textContent = "Could not use that file. Pick a JPG or PNG.";
+  }
 }
 
 function desktopMessage(type) {
@@ -122,7 +195,7 @@ function desktopMessage(type) {
 }
 
 document.querySelector(".titlebar")?.addEventListener("mousedown", (event) => {
-  if (event.button !== 0 || event.target.closest(".win-btn, .theme-dock, .titlebar-tools")) return;
+  if (event.button !== 0 || event.target.closest(".win-btn, .theme-dock, .titlebar-tools, input, label")) return;
   desktopMessage("drag");
 });
 
@@ -228,7 +301,16 @@ document.querySelectorAll("#bg-color, #bg-color-settings").forEach((input) => {
 });
 
 applyTheme(localStorage.getItem(THEME_KEY) || "#e10600");
-applyBackground(localStorage.getItem(BG_KEY) || "#0b0c0e");
+applyBackground(localStorage.getItem(BG_KEY) || "#0b0c0e", { keepPhoto: true });
+applyBackgroundPhoto(localStorage.getItem(BG_PHOTO_KEY) || "");
+
+document.querySelectorAll("#bg-photo-settings").forEach((input) => {
+  input.addEventListener("change", () => {
+    onBackgroundPhotoPicked(input.files?.[0]);
+    input.value = "";
+  });
+});
+document.getElementById("bg-photo-clear")?.addEventListener("click", () => applyBackgroundPhoto(""));
 
 function versionParts(value) {
   return String(value || "")
