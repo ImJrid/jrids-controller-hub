@@ -836,6 +836,21 @@ h1 {
   font-size: 13px;
 }
 
+.legal-card p {
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.legal-card p:last-child {
+  margin-bottom: 0;
+}
+
+.legal-lead {
+  color: var(--text) !important;
+  font-weight: 700;
+  font-size: 16px;
+}
+
 .update-row {
   display: flex;
   flex-wrap: wrap;
