@@ -536,8 +536,12 @@ h1 {
 
 .launch-btn:disabled {
   opacity: 0.55;
-  cursor: wait;
+  cursor: not-allowed;
   filter: none;
+}
+
+#usb-poll-measure:disabled {
+  cursor: wait;
 }
 
 .launch-art {
