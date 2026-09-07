@@ -139,8 +139,6 @@ function applyBackgroundPhoto(dataUrl) {
     app?.classList.remove("has-photo");
     localStorage.removeItem(BG_PHOTO_KEY);
   }
-  const clearBtn = document.getElementById("bg-photo-clear");
-  if (clearBtn) clearBtn.disabled = !photo;
   const status = document.getElementById("bg-photo-status");
   if (status) status.textContent = photo ? "Using a photo background." : "";
 }
