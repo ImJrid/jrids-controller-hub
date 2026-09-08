@@ -180,6 +180,12 @@ internal sealed class HubForm : Form
             return;
         }
 
+        if (type == "check-update")
+        {
+            _ = CheckForUpdatesAsync(apply: false);
+            return;
+        }
+
         if (type == "install-update")
         {
             _ = CheckForUpdatesAsync(apply: true);

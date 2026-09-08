@@ -1,11 +1,13 @@
 ﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
 const BG_PHOTO_KEY = "jrids-bg-photo";
-const APP_VERSION = "1.0.0";
+const SKIP_UPDATE_KEY = "jrids-skip-update";
+const APP_VERSION = "1.0.1";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
 const BG_PRESETS = ["#0b0c0e", "#121826", "#1a1220", "#101610", "#1a1410", "#e8eaed"];
+let pendingUpdatePrompt = false;
 
 const TOOLS = {
   hyperstrike: {
@@ -329,7 +331,7 @@ function versionNewer(latest, current) {
   return false;
 }
 
-function setUpdateUi({ latest, url, error, checking, installing } = {}) {
+function setUpdateUi({ latest, url, error, checking, installing, prompt } = {}) {
   const status = document.getElementById("update-status");
   const link = document.getElementById("update-open");
   const settingsNav = document.querySelector(".nav-settings");
@@ -344,29 +346,67 @@ function setUpdateUi({ latest, url, error, checking, installing } = {}) {
     status.classList.add("warn");
     link.hidden = true;
     settingsNav?.classList.add("has-update");
+    const modal = document.getElementById("update-modal");
+    if (modal && !modal.hidden) {
+      setUpdateModal({
+        visible: true,
+        copy: `Updating to ${String(latest || "").replace(/^v/i, "")}. The app will restart.`,
+        busy: true,
+      });
+    }
     return;
   }
   if (error) {
     status.textContent = "Couldn't check right now. You can still open GitHub.";
     link.hidden = false;
     link.href = UPDATE_PAGE;
+    if (prompt) hideUpdateModal();
     return;
   }
   if (versionNewer(latest, APP_VERSION)) {
-    status.textContent = `Version ${String(latest).replace(/^v/i, "")} is available.`;
+    const tag = String(latest);
+    status.textContent = `Version ${tag.replace(/^v/i, "")} is available.`;
     status.classList.add("warn");
     link.hidden = false;
     link.href = url || UPDATE_PAGE;
     settingsNav?.classList.add("has-update");
+    const skipped = localStorage.getItem(SKIP_UPDATE_KEY) === tag;
+    if (prompt && !skipped) {
+      setUpdateModal({
+        visible: true,
+        latest: tag,
+        copy: `Version ${tag.replace(/^v/i, "")} is available. Update now, or skip and keep using ${APP_VERSION}.`,
+      });
+    }
     return;
   }
   status.textContent = "You're on the latest version.";
   status.classList.add("ok");
   link.hidden = true;
   settingsNav?.classList.remove("has-update");
+  hideUpdateModal();
 }
 
-async function checkForUpdates() {
+function hideUpdateModal() {
+  const modal = document.getElementById("update-modal");
+  if (modal) modal.hidden = true;
+}
+
+function setUpdateModal({ visible, latest, copy, busy } = {}) {
+  const modal = document.getElementById("update-modal");
+  const text = document.getElementById("update-modal-copy");
+  const now = document.getElementById("update-modal-now");
+  const skip = document.getElementById("update-modal-skip");
+  if (!modal) return;
+  modal.hidden = !visible;
+  if (text && copy) text.textContent = copy;
+  if (latest) modal.dataset.latest = latest;
+  if (now) now.disabled = !!busy;
+  if (skip) skip.disabled = !!busy;
+}
+
+async function checkForUpdates({ prompt = false } = {}) {
+  pendingUpdatePrompt = !!prompt;
   setUpdateUi({ checking: true });
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({ type: "check-update" });
@@ -376,17 +416,19 @@ async function checkForUpdates() {
     const response = await fetch(UPDATE_API, { headers: { Accept: "application/vnd.github+json" } });
     if (!response.ok) throw new Error("update check failed");
     const data = await response.json();
-    setUpdateUi({ latest: data.tag_name, url: data.html_url });
+    setUpdateUi({ latest: data.tag_name, url: data.html_url, prompt });
   } catch {
-    setUpdateUi({ error: true });
+    setUpdateUi({ error: true, prompt });
   }
 }
 
 window.chrome?.webview?.addEventListener("message", (event) => {
   const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
   if (data?.type === "update-result") {
-    if (data.error) setUpdateUi({ error: true });
-    else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing });
+    const prompt = pendingUpdatePrompt;
+    pendingUpdatePrompt = false;
+    if (data.error) setUpdateUi({ error: true, prompt });
+    else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing, prompt });
     return;
   }
   if (data?.type === "usb-poll-progress" || data?.type === "usb-poll-result") {
@@ -395,6 +437,7 @@ window.chrome?.webview?.addEventListener("message", (event) => {
 });
 
 document.getElementById("update-check")?.addEventListener("click", () => {
+  pendingUpdatePrompt = false;
   setUpdateUi({ checking: true });
   if (window.chrome?.webview) {
     window.chrome.webview.postMessage({ type: "install-update" });
@@ -402,6 +445,20 @@ document.getElementById("update-check")?.addEventListener("click", () => {
   }
   checkForUpdates();
 });
+document.getElementById("update-modal-now")?.addEventListener("click", () => {
+  setUpdateUi({ checking: true });
+  if (window.chrome?.webview) {
+    window.chrome.webview.postMessage({ type: "install-update" });
+    return;
+  }
+  window.open(UPDATE_PAGE, "_blank", "noopener,noreferrer");
+});
+document.getElementById("update-modal-skip")?.addEventListener("click", () => {
+  const latest = document.getElementById("update-modal")?.dataset.latest;
+  if (latest) localStorage.setItem(SKIP_UPDATE_KEY, latest);
+  hideUpdateModal();
+});
+checkForUpdates({ prompt: true });
 document.getElementById("usb-poll-measure")?.addEventListener("click", () => {
   const btn = document.getElementById("usb-poll-measure");
   if (btn) btn.disabled = true;
@@ -560,41 +617,51 @@ function padTitle(id) {
   return { big: (match ? match[1] : id).trim(), small: match?.[2]?.trim() || "" };
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
 function applyUsbPoll(data) {
   const graph = document.getElementById("usb-poll-graph");
   const btn = document.getElementById("usb-poll-measure");
   if (!graph) return;
   if (data.type === "usb-poll-progress") {
-    graph.textContent = "Capturing USB interrupts...\n\nAllow admin if asked. Leave the pad plugged in — you do not need to move the sticks.";
+    graph.innerHTML =
+      `<p class="poll-empty">Capturing USB interrupts</p><p class="poll-status">Allow admin if asked. Leave the pad plugged in — you do not need to move the sticks.</p>`;
     if (btn) btn.disabled = true;
     return;
   }
   if (btn) btn.disabled = false;
   if (data.error) {
-    graph.textContent = data.error;
+    graph.innerHTML = `<p class="poll-empty">Capture failed</p><p class="poll-status">${escapeHtml(data.error)}</p>`;
     return;
   }
   const buckets = data.buckets || [];
-  const maxPct = Math.max(...buckets.map((bucket) => Number(bucket.pct) || 0), 0.1);
-  const lines = buckets.map((bucket) => {
-    const width = Number(bucket.bar);
-    const hashes = Number.isFinite(width)
-      ? Math.max(0, width)
-      : Math.round((56 * (Number(bucket.pct) || 0)) / maxPct);
-    const bar = "#".repeat(hashes);
-    const pct = Number(bucket.pct || 0).toFixed(1).padStart(5, " ");
-    return `${String(bucket.label).padEnd(11)} ${bar.padEnd(56)} ${pct}%`;
-  });
-  const hz = Math.round(data.hz || 0);
+  const maxBar = Math.max(...buckets.map((bucket) => Number(bucket.bar) || 0), 1);
+  const rows = buckets
+    .map((bucket) => {
+      const pct = Number(bucket.pct || 0);
+      const width = Math.max(0, Math.round((100 * (Number(bucket.bar) || 0)) / maxBar));
+      return `<div class="poll-row">
+        <span class="poll-label">${escapeHtml(bucket.label)}</span>
+        <div class="poll-track"><div class="poll-fill" style="width:${width}%"></div></div>
+        <span class="poll-pct">${pct.toFixed(1)}%</span>
+      </div>`;
+    })
+    .join("");
+  const hz = Math.round(data.hz || 0).toLocaleString();
   const samples = Number(data.samples || 0).toLocaleString();
-  graph.textContent = [
-    `Poll Rate:  ${hz} Hz`,
-    `Samples:    ${samples}`,
-    "",
-    "Timing Distribution",
-    "",
-    ...lines,
-  ].join("\n");
+  graph.innerHTML = `
+    <div class="poll-stats">
+      <div class="poll-stat"><span>Poll rate</span><strong>${hz} Hz</strong></div>
+      <div class="poll-stat"><span>Samples</span><strong>${samples}</strong></div>
+    </div>
+    <p class="poll-title">Timing distribution</p>
+    <div class="poll-rows">${rows}</div>`;
 }
 
 function ensureConnectedUi(pad) {

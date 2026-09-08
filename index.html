@@ -235,7 +235,7 @@
                 <div>
                   <p class="about-title">Jrids Controller Hub</p>
                   <p class="about-created">Created by Jrids</p>
-                  <p class="about-version" id="app-version">Version 1.0.0</p>
+                  <p class="about-version" id="app-version">Version 1.0.1</p>
                 </div>
               </div>
               <div class="update-row">
@@ -326,9 +326,10 @@
               </div>
             </div>
             <div class="usb-poll-card">
-              <pre class="poll-graph" id="usb-poll-graph">Timing Distribution
-
-Leave the pad plugged in over USB. Click Measure — no stick movement needed.</pre>
+              <div class="poll-graph" id="usb-poll-graph">
+                <p class="poll-empty">Timing Distribution</p>
+                <p class="poll-hint">Leave the pad plugged in over USB. Click Measure — no stick movement needed.</p>
+              </div>
               <div class="launch-actions">
                 <button class="launch-btn" id="usb-poll-measure" type="button">Measure USB 8K</button>
               </div>
@@ -405,6 +406,18 @@ Leave the pad plugged in over USB. Click Measure — no stick movement needed.</
         <span>Jrids Controller Hub · Created by Jrids</span>
         <span id="clock"></span>
       </footer>
+    </div>
+    <div class="update-modal" id="update-modal" hidden>
+      <div class="update-modal-card">
+        <p class="kicker">GitHub</p>
+        <h2>Update available</h2>
+        <p id="update-modal-copy">A newer version of Jrids Controller Hub is ready.</p>
+        <p class="update-modal-hint">Skip if you want to keep using this version. You can update later from Settings.</p>
+        <div class="update-modal-actions">
+          <button class="launch-btn" id="update-modal-now" type="button">Update now</button>
+          <button class="launch-btn alt" id="update-modal-skip" type="button">Skip</button>
+        </div>
+      </div>
     </div>
     <script src="app.js"></script>
   </body>
