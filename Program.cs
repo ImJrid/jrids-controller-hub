@@ -363,7 +363,7 @@ internal sealed class HubForm : Form
                 ?? $"https://github.com/ImJrid/jrids-controller-hub/releases/download/{tag}/JridsControllerHubSetup.exe";
             var newer = IsNewerThanCurrent(tag);
             var installing = apply && newer && CanInstallUpdate() && !_updateInProgress;
-            PostWebJson(new { type = "update-result", tag, html, installing });
+            PostWebJson(new { type = "update-result", tag, html, newer, installing });
 
             if (!installing)
             {
