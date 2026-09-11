@@ -38,6 +38,28 @@ internal sealed class HubForm : Form
         DefaultBackgroundColor = Color.FromArgb(11, 12, 14)
     };
 
+    private readonly WebView2 _embedView = new()
+    {
+        Visible = false,
+        DefaultBackgroundColor = Color.FromArgb(11, 12, 14)
+    };
+
+    private readonly Panel _configBar = new()
+    {
+        Visible = false,
+        BackColor = Color.FromArgb(14, 16, 19)
+    };
+
+    private readonly Label _configTitle = new()
+    {
+        AutoSize = true,
+        ForeColor = Color.White,
+        Font = new Font("Segoe UI", 10, FontStyle.Bold),
+        Margin = new Padding(12, 11, 0, 10)
+    };
+
+    private bool _embedReady;
+
     public HubForm()
     {
         Text = "Jrids Controller Hub";
@@ -56,7 +78,11 @@ internal sealed class HubForm : Form
             Icon = Icon.FromHandle(bitmap.GetHicon());
         }
 
+        ConfigureConfigBar();
         Controls.Add(_webView);
+        Controls.Add(_embedView);
+        Controls.Add(_configBar);
+        Layout += (_, _) => LayoutConfigView();
         Load += async (_, _) =>
         {
             try
@@ -166,6 +192,8 @@ internal sealed class HubForm : Form
     {
         string type;
         string? toolId = null;
+        string? configUrl = null;
+        string? configTitle = null;
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(args.WebMessageAsJson);
@@ -173,6 +201,14 @@ internal sealed class HubForm : Form
             if (doc.RootElement.TryGetProperty("id", out var idEl))
             {
                 toolId = idEl.GetString();
+            }
+            if (doc.RootElement.TryGetProperty("url", out var urlEl))
+            {
+                configUrl = urlEl.GetString();
+            }
+            if (doc.RootElement.TryGetProperty("title", out var titleEl))
+            {
+                configTitle = titleEl.GetString();
             }
         }
         catch
@@ -201,6 +237,18 @@ internal sealed class HubForm : Form
         if (type == "launch-tool")
         {
             BeginInvoke(() => LaunchBundledTool(toolId));
+            return;
+        }
+
+        if (type == "open-config")
+        {
+            _ = OpenConfigAsync(configUrl, configTitle);
+            return;
+        }
+
+        if (type == "close-config")
+        {
+            BeginInvoke(CloseConfig);
             return;
         }
 
@@ -377,6 +425,99 @@ internal sealed class HubForm : Form
         }
 
         Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+    }
+
+    private void ConfigureConfigBar()
+    {
+        var close = CreateConfigButton("Close config");
+        close.Click += (_, _) => CloseConfig();
+        var reload = CreateConfigButton("↻  Reload");
+        reload.Click += (_, _) => _embedView.CoreWebView2?.Reload();
+
+        _configBar.Controls.Add(_configTitle);
+        _configBar.Controls.Add(reload);
+        _configBar.Controls.Add(close);
+        _configBar.Resize += (_, _) =>
+        {
+            close.Location = new Point(_configBar.ClientSize.Width - close.Width - 12, 7);
+            reload.Location = new Point(close.Left - reload.Width - 8, 7);
+        };
+    }
+
+    private static Button CreateConfigButton(string text) => new()
+    {
+        Text = text,
+        AutoSize = true,
+        FlatStyle = FlatStyle.Flat,
+        ForeColor = Color.Gainsboro,
+        BackColor = Color.FromArgb(24, 27, 32),
+        Padding = new Padding(10, 5, 10, 5),
+        Margin = new Padding(0),
+        Cursor = Cursors.Hand
+    };
+
+    private async Task OpenConfigAsync(string? url, string? title)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
+        {
+            return;
+        }
+
+        if (!_embedReady)
+        {
+            var userData = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "JridsControllerHub",
+                "ConfigWebView2");
+            Directory.CreateDirectory(userData);
+
+            var environment = await CoreWebView2Environment.CreateAsync(null, userData);
+            await _embedView.EnsureCoreWebView2Async(environment);
+            _embedView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+            _embedView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+            _embedView.CoreWebView2.Settings.IsStatusBarEnabled = false;
+            _embedView.CoreWebView2.NewWindowRequested += (_, args) =>
+            {
+                args.Handled = true;
+                _embedView.CoreWebView2.Navigate(args.Uri);
+            };
+            _embedReady = true;
+        }
+
+        _configTitle.Text = $"{(string.IsNullOrWhiteSpace(title) ? "Configuration" : title).ToUpperInvariant()} CONFIG";
+        _configBar.Visible = true;
+        _embedView.Visible = true;
+        LayoutConfigView();
+        _configBar.BringToFront();
+        _embedView.BringToFront();
+        _configBar.BringToFront();
+        _embedView.CoreWebView2.Navigate(uri.ToString());
+    }
+
+    private void CloseConfig()
+    {
+        _embedView.Visible = false;
+        _configBar.Visible = false;
+        _webView.BringToFront();
+        _webView.CoreWebView2?.PostWebMessageAsJson("{\"type\":\"config-closed\"}");
+    }
+
+    private void LayoutConfigView()
+    {
+        if (!_embedView.Visible && !_configBar.Visible)
+        {
+            return;
+        }
+
+        const int sidebarWidth = 92;
+        const int titlebarHeight = 42;
+        const int configBarHeight = 46;
+        const int statusbarHeight = 28;
+        var contentWidth = Math.Max(0, ClientSize.Width - sidebarWidth);
+        var contentHeight = Math.Max(0, ClientSize.Height - titlebarHeight - configBarHeight - statusbarHeight);
+        _configBar.Bounds = new Rectangle(sidebarWidth, titlebarHeight, contentWidth, configBarHeight);
+        _embedView.Bounds = new Rectangle(sidebarWidth, titlebarHeight + configBarHeight, contentWidth, contentHeight);
     }
 
     private bool CanInstallUpdate() => FindUninstaller() is not null && !Debugger.IsAttached;
