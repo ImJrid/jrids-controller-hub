@@ -1,8 +1,8 @@
-const THEME_KEY = "jrids-theme-color";
+﻿const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
 const BG_PHOTO_KEY = "jrids-bg-photo";
 const SKIP_UPDATE_KEY = "jrids-skip-update";
-let currentAppVersion = "1.0.1"; // Default or initial value
+const APP_VERSION = "1.0.2";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -14,7 +14,7 @@ const TOOLS = {
     title: "Hyperstrike",
     kicker: "Setup",
     blurb:
-      "Open Hyperstrike configuration directly inside Jrids Controller Hub.",
+      "Open the Hyperstrike connect and setup portal. This launches the official setup page in your browser.",
     url: "https://hs2.evua.cc/connect",
     logo: "assets/hyperstrike-logo.png",
     logoClass: "logo-lift",
@@ -22,7 +22,7 @@ const TOOLS = {
   firebird: {
     title: "Firebird",
     kicker: "Setup",
-    blurb: "Open Firebird configuration directly inside Jrids Controller Hub.",
+    blurb: "Open the Firebird setup tool. This launches the Firebird portal in your browser.",
     url: "https://bzl-web.com/tool/firebird/",
     logo: "assets/firebird-logo.png",
     logoClass: "",
@@ -30,7 +30,7 @@ const TOOLS = {
   suiovoi: {
     title: "Suiovoi",
     kicker: "Setup",
-    blurb: "Open Suiovoi configuration directly inside Jrids Controller Hub.",
+    blurb: "Open the Suiovoi setup portal in your browser.",
     url: "https://sy2.suiovoi.cc/",
     logo: "assets/suiovoi-logo.png",
     logoClass: "",
@@ -44,7 +44,7 @@ const TOOLS = {
   marius: {
     title: "Marius",
     kicker: "Setup",
-    blurb: "Open Marius configuration directly inside Jrids Controller Hub.",
+    blurb: "Open Marius setup or firmware update in your browser.",
     url: "https://setup.mariusheier.com/",
     updateUrl: "https://update.mariusheier.com/",
     logo: "",
@@ -228,8 +228,8 @@ function renderLaunchView(id) {
       <div class="launch-copy">
         <p>${tool.blurb}</p>
         <div class="launch-actions">
-          <button class="launch-btn" type="button" data-config-url="${tool.url}" data-config-title="${tool.title}">Open config</button>
-          ${tool.updateUrl ? `<button class="launch-btn alt" type="button" data-config-url="${tool.updateUrl}" data-config-title="${tool.title} Update">Open update</button>` : ""}
+          <button class="launch-btn" type="button" data-url="${tool.url}">Launch setup</button>
+          ${tool.updateUrl ? `<button class="launch-btn alt" type="button" data-url="${tool.updateUrl}">Launch update</button>` : ""}
         </div>
         ${tool.helper ? `
         <div class="launch-helper">
@@ -267,34 +267,6 @@ function showView(id) {
   });
 }
 
-function showWebview(url) {
-  const iframe = document.getElementById("webview-iframe");
-  if (iframe) {
-    iframe.src = url;
-    showView("webview");
-  }
-}
-
-let configNavActive = false;
-let returnViewAfterConfig = "home";
-
-function markConfigNav(url) {
-  const matchingNav = [...document.querySelectorAll(".nav-btn[data-config-url]")]
-    .find((btn) => btn.dataset.configUrl === url);
-  if (!matchingNav) {
-    configNavActive = false;
-    return;
-  }
-
-  const activeView = document.querySelector(".view.active")?.id?.replace("view-", "");
-  returnViewAfterConfig = activeView || "home";
-  configNavActive = true;
-  document.querySelectorAll(".nav-btn").forEach((btn) => {
-    btn.classList.toggle("active", btn === matchingNav);
-  });
-}
-}
-
 document.body.addEventListener("click", (event) => {
   const accent = event.target.closest("[data-accent]");
   if (accent) {
@@ -306,51 +278,18 @@ document.body.addEventListener("click", (event) => {
     applyBackground(bg.dataset.bg);
     return;
   }
-  const config = event.target.closest("[data-config-url]");
-  if (config?.dataset.configUrl) {
-    markConfigNav(config.dataset.configUrl);
-    window.chrome?.webview?.postMessage({
-      type: "open-config",
-      url: config.dataset.configUrl,
-      title: config.dataset.configTitle || "Configuration",
-    });
-    return;
-  }
   const nav = event.target.closest("[data-view]");
   if (nav?.dataset.view) {
-    configNavActive = false;
-    window.chrome?.webview?.postMessage({ type: "close-config" });
     showView(nav.dataset.view);
     return;
   }
   const launch = event.target.closest(".launch-btn");
-  if (launch?.dataset.configUrl) {
-    window.chrome?.webview?.postMessage({
-      type: "open-config",
-      url: launch.dataset.configUrl,
-      title: launch.dataset.configTitle || "Configuration",
-    });
-    return;
-  }
   if (launch?.dataset.tool) {
     window.chrome?.webview?.postMessage({ type: "launch-tool", id: launch.dataset.tool });
     return;
   }
   if (launch?.dataset.url) {
-    showWebview(launch.dataset.url);
-    return;
-  }
-  const back = event.target.closest(".back-button");
-  if (back?.dataset.view) {
-    showView(back.dataset.view);
-    return;
-  }
-});
-
-window.chrome?.webview?.addEventListener("message", (event) => {
-  if (event.data?.type === "config-closed" && configNavActive) {
-    configNavActive = false;
-    showView(returnViewAfterConfig);
+    window.open(launch.dataset.url, "_blank", "noopener,noreferrer");
   }
 });
 
@@ -424,7 +363,7 @@ function setUpdateUi({ latest, url, error, checking, installing, prompt } = {}) 
     if (prompt) hideUpdateModal();
     return;
   }
-  if (versionNewer(latest, currentAppVersion)) {
+  if (versionNewer(latest, APP_VERSION)) {
     const tag = String(latest);
     status.textContent = `Version ${tag.replace(/^v/i, "")} is available.`;
     status.classList.add("warn");
@@ -436,7 +375,7 @@ function setUpdateUi({ latest, url, error, checking, installing, prompt } = {}) 
       setUpdateModal({
         visible: true,
         latest: tag,
-        copy: `Version ${tag.replace(/^v/i, "")} is available. Update now, or skip and keep using ${currentAppVersion}.`,
+        copy: `Version ${tag.replace(/^v/i, "")} is available. Update now, or skip and keep using ${APP_VERSION}.`,
       });
     }
     return;
@@ -492,12 +431,6 @@ window.chrome?.webview?.addEventListener("message", (event) => {
     else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing, prompt });
     return;
   }
-  if (data?.type === "app-version") {
-    currentAppVersion = data.version;
-    if (versionLabel) versionLabel.textContent = `Version ${currentAppVersion}`;
-    checkForUpdates({ prompt: true });
-    return;
-  }
   if (data?.type === "usb-poll-progress" || data?.type === "usb-poll-result") {
     applyUsbPoll(data);
   }
@@ -531,6 +464,8 @@ document.getElementById("usb-poll-measure")?.addEventListener("click", () => {
   if (btn) btn.disabled = true;
   window.chrome?.webview?.postMessage({ type: "usb-poll" });
 });
+const versionLabel = document.getElementById("app-version");
+if (versionLabel) versionLabel.textContent = `Version ${APP_VERSION}`;
 
 function updateClock() {
   document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {
