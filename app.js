@@ -14,7 +14,7 @@ const TOOLS = {
     title: "Hyperstrike",
     kicker: "Setup",
     blurb:
-      "Open the Hyperstrike connect and setup portal. This launches the official setup page in your browser.",
+      "Open Hyperstrike configuration directly inside Jrids Controller Hub.",
     url: "https://hs2.evua.cc/connect",
     logo: "assets/hyperstrike-logo.png",
     logoClass: "logo-lift",
@@ -22,7 +22,7 @@ const TOOLS = {
   firebird: {
     title: "Firebird",
     kicker: "Setup",
-    blurb: "Open the Firebird setup tool. This launches the Firebird portal in your browser.",
+    blurb: "Open Firebird configuration directly inside Jrids Controller Hub.",
     url: "https://bzl-web.com/tool/firebird/",
     logo: "assets/firebird-logo.png",
     logoClass: "",
@@ -30,7 +30,7 @@ const TOOLS = {
   suiovoi: {
     title: "Suiovoi",
     kicker: "Setup",
-    blurb: "Open the Suiovoi setup portal in your browser.",
+    blurb: "Open Suiovoi configuration directly inside Jrids Controller Hub.",
     url: "https://sy2.suiovoi.cc/",
     logo: "assets/suiovoi-logo.png",
     logoClass: "",
@@ -44,7 +44,7 @@ const TOOLS = {
   marius: {
     title: "Marius",
     kicker: "Setup",
-    blurb: "Open Marius setup or firmware update in your browser.",
+    blurb: "Open Marius configuration directly inside Jrids Controller Hub.",
     url: "https://setup.mariusheier.com/",
     updateUrl: "https://update.mariusheier.com/",
     logo: "",
@@ -228,8 +228,8 @@ function renderLaunchView(id) {
       <div class="launch-copy">
         <p>${tool.blurb}</p>
         <div class="launch-actions">
-          <button class="launch-btn" type="button" data-url="${tool.url}">Launch setup</button>
-          ${tool.updateUrl ? `<button class="launch-btn alt" type="button" data-url="${tool.updateUrl}">Launch update</button>` : ""}
+          <button class="launch-btn" type="button" data-config-url="${tool.url}" data-config-title="${tool.title}">Open config</button>
+          ${tool.updateUrl ? `<button class="launch-btn alt" type="button" data-config-url="${tool.updateUrl}" data-config-title="${tool.title} Update">Open update</button>` : ""}
         </div>
         ${tool.helper ? `
         <div class="launch-helper">
@@ -267,6 +267,25 @@ function showView(id) {
   });
 }
 
+let configNavActive = false;
+let returnViewAfterConfig = "home";
+
+function markConfigNav(url) {
+  const matchingNav = [...document.querySelectorAll(".nav-btn[data-config-url]")]
+    .find((btn) => btn.dataset.configUrl === url);
+  if (!matchingNav) {
+    configNavActive = false;
+    return;
+  }
+
+  const activeView = document.querySelector(".view.active")?.id?.replace("view-", "");
+  returnViewAfterConfig = activeView || "home";
+  configNavActive = true;
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn === matchingNav);
+  });
+}
+
 document.body.addEventListener("click", (event) => {
   const accent = event.target.closest("[data-accent]");
   if (accent) {
@@ -278,18 +297,45 @@ document.body.addEventListener("click", (event) => {
     applyBackground(bg.dataset.bg);
     return;
   }
+  const config = event.target.closest("[data-config-url]");
+  if (config?.dataset.configUrl) {
+    markConfigNav(config.dataset.configUrl);
+    window.chrome?.webview?.postMessage({
+      type: "open-config",
+      url: config.dataset.configUrl,
+      title: config.dataset.configTitle || "Configuration",
+    });
+    return;
+  }
   const nav = event.target.closest("[data-view]");
   if (nav?.dataset.view) {
+    configNavActive = false;
+    window.chrome?.webview?.postMessage({ type: "close-config" });
     showView(nav.dataset.view);
     return;
   }
   const launch = event.target.closest(".launch-btn");
+  if (launch?.dataset.configUrl) {
+    window.chrome?.webview?.postMessage({
+      type: "open-config",
+      url: launch.dataset.configUrl,
+      title: launch.dataset.configTitle || "Configuration",
+    });
+    return;
+  }
   if (launch?.dataset.tool) {
     window.chrome?.webview?.postMessage({ type: "launch-tool", id: launch.dataset.tool });
     return;
   }
   if (launch?.dataset.url) {
     window.open(launch.dataset.url, "_blank", "noopener,noreferrer");
+  }
+});
+
+window.chrome?.webview?.addEventListener("message", (event) => {
+  if (event.data?.type === "config-closed" && configNavActive) {
+    configNavActive = false;
+    showView(returnViewAfterConfig);
   }
 });
 

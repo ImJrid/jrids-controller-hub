@@ -28,6 +28,11 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
   </ItemGroup>
 
+  <!-- Keep an archived project copy from being compiled by this project. -->
+  <ItemGroup>
+    <Compile Remove="jrids-controller-hub\**\*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Include="index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
