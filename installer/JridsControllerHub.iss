@@ -2,7 +2,7 @@
 #define MyAppVersion "1.0.2"
 #define MyAppPublisher "Jrids"
 #define MyAppURL "https://x.com/imjrid"
-#define MyAppExeName "Jrids Controller Hub.exe"
+#define MyAppExeName "JridsControllerHub.exe"
 
 [Setup]
 AppId={{8F3C2A91-4B6E-4D1A-9C7F-2E5A8B0D1C44}
