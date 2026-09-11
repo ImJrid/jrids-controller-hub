@@ -1,8 +1,8 @@
-﻿const THEME_KEY = "jrids-theme-color";
+const THEME_KEY = "jrids-theme-color";
 const BG_KEY = "jrids-bg-color";
 const BG_PHOTO_KEY = "jrids-bg-photo";
 const SKIP_UPDATE_KEY = "jrids-skip-update";
-const APP_VERSION = "1.0.1";
+let currentAppVersion = "1.0.1"; // Default or initial value
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -267,6 +267,14 @@ function showView(id) {
   });
 }
 
+function showWebview(url) {
+  const iframe = document.getElementById("webview-iframe");
+  if (iframe) {
+    iframe.src = url;
+    showView("webview");
+  }
+}
+
 document.body.addEventListener("click", (event) => {
   const accent = event.target.closest("[data-accent]");
   if (accent) {
@@ -289,7 +297,13 @@ document.body.addEventListener("click", (event) => {
     return;
   }
   if (launch?.dataset.url) {
-    window.open(launch.dataset.url, "_blank", "noopener,noreferrer");
+    showWebview(launch.dataset.url);
+    return;
+  }
+  const back = event.target.closest(".back-button");
+  if (back?.dataset.view) {
+    showView(back.dataset.view);
+    return;
   }
 });
 
@@ -363,7 +377,7 @@ function setUpdateUi({ latest, url, error, checking, installing, prompt } = {}) 
     if (prompt) hideUpdateModal();
     return;
   }
-  if (versionNewer(latest, APP_VERSION)) {
+  if (versionNewer(latest, currentAppVersion)) {
     const tag = String(latest);
     status.textContent = `Version ${tag.replace(/^v/i, "")} is available.`;
     status.classList.add("warn");
@@ -375,7 +389,7 @@ function setUpdateUi({ latest, url, error, checking, installing, prompt } = {}) 
       setUpdateModal({
         visible: true,
         latest: tag,
-        copy: `Version ${tag.replace(/^v/i, "")} is available. Update now, or skip and keep using ${APP_VERSION}.`,
+        copy: `Version ${tag.replace(/^v/i, "")} is available. Update now, or skip and keep using ${currentAppVersion}.`,
       });
     }
     return;
@@ -431,6 +445,12 @@ window.chrome?.webview?.addEventListener("message", (event) => {
     else setUpdateUi({ latest: data.tag, url: data.html, installing: data.installing, prompt });
     return;
   }
+  if (data?.type === "app-version") {
+    currentAppVersion = data.version;
+    if (versionLabel) versionLabel.textContent = `Version ${currentAppVersion}`;
+    checkForUpdates({ prompt: true });
+    return;
+  }
   if (data?.type === "usb-poll-progress" || data?.type === "usb-poll-result") {
     applyUsbPoll(data);
   }
@@ -464,8 +484,6 @@ document.getElementById("usb-poll-measure")?.addEventListener("click", () => {
   if (btn) btn.disabled = true;
   window.chrome?.webview?.postMessage({ type: "usb-poll" });
 });
-const versionLabel = document.getElementById("app-version");
-if (versionLabel) versionLabel.textContent = `Version ${APP_VERSION}`;
 
 function updateClock() {
   document.getElementById("clock").textContent = new Date().toLocaleTimeString([], {

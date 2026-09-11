@@ -160,6 +160,7 @@ internal sealed class HubForm : Form
         };
 
         _webView.CoreWebView2.Navigate($"https://{AppHost}/index.html");
+        PostWebJson(new { type = "app-version", version = typeof(HubForm).Assembly.GetName().Version?.ToString(3) ?? "0.0.0" });
     }
 
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs args)
