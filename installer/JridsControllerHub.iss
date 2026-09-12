@@ -1,8 +1,11 @@
 #define MyAppName "Jrids Controller Hub"
-#define MyAppVersion "1.0.4"
+#define MyAppVersion "1.0.5"
 #define MyAppPublisher "Jrids"
 #define MyAppURL "https://x.com/imjrid"
 #define MyAppExeName "Jrids Controller Hub.exe"
+#ifndef MyReleaseDir
+  #define MyReleaseDir "..\release"
+#endif
 
 [Setup]
 AppId={{8F3C2A91-4B6E-4D1A-9C7F-2E5A8B0D1C44}
@@ -34,8 +37,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
-Source: "..\release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\release\UsbCacheCleaner.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyReleaseDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#MyReleaseDir}\UsbCacheCleaner.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
