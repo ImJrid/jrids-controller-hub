@@ -10,6 +10,18 @@ Windows launcher and gamepad tester created by [Jrids](https://x.com/imjrid).
 
 ![Jrids gamepad tester](docs/screenshots/tester.png)
 
+**Built-in config tools**
+
+![Hyperstrike config inside Jrids Controller Hub](docs/screenshots/hyperstrike.png)
+
+![Firebird config inside Jrids Controller Hub](docs/screenshots/firebird.png)
+
+**Suiovoi and Marius**
+
+![Suiovoi setup page](docs/screenshots/suiovoi.png)
+
+![Marius setup page](docs/screenshots/marius.png)
+
 **8K Poll**
 
 ![Jrids 8K poll rate](docs/screenshots/usbpoll.png)
@@ -17,6 +29,10 @@ Windows launcher and gamepad tester created by [Jrids](https://x.com/imjrid).
 **Controller Sellers**
 
 ![Jrids Controller Hub sellers](docs/screenshots/sellers.png)
+
+**Changelog**
+
+![Jrids Controller Hub changelog](docs/screenshots/changelog.png)
 
 **Settings**
 
@@ -42,7 +58,8 @@ You can also run `release/Jrids Controller Hub.exe` without installing.
 
 - Hyperstrike, Firebird, Suiovoi, and Marius setup/update launchers
 - Jrids gamepad tester
-- Theme colors and app info
+- 8K USB poll testing, controller sellers, and built-in changelog
+- Theme colors, photo backgrounds, and app info
 
 ## Socials
 
