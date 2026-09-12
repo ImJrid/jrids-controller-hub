@@ -2,7 +2,8 @@
 const BG_KEY = "jrids-bg-color";
 const BG_PHOTO_KEY = "jrids-bg-photo";
 const SKIP_UPDATE_KEY = "jrids-skip-update";
-const APP_VERSION = "1.0.3";
+const WELCOME_SEEN_KEY = "jrids-welcome-seen";
+const APP_VERSION = "1.0.4";
 const UPDATE_API = "https://api.github.com/repos/ImJrid/jrids-controller-hub/releases/latest";
 const UPDATE_PAGE = "https://github.com/ImJrid/jrids-controller-hub/releases/latest";
 const THEME_PRESETS = ["#e10600", "#ff9c00", "#ff7a18", "#3aa0ff", "#7c5cff", "#2ecc71"];
@@ -504,6 +505,15 @@ document.getElementById("update-modal-skip")?.addEventListener("click", () => {
   const latest = document.getElementById("update-modal")?.dataset.latest;
   if (latest) localStorage.setItem(SKIP_UPDATE_KEY, latest);
   hideUpdateModal();
+});
+
+const welcomeModal = document.getElementById("welcome-modal");
+if (welcomeModal && !localStorage.getItem(WELCOME_SEEN_KEY)) {
+  welcomeModal.hidden = false;
+}
+document.getElementById("welcome-start")?.addEventListener("click", () => {
+  localStorage.setItem(WELCOME_SEEN_KEY, "true");
+  if (welcomeModal) welcomeModal.hidden = true;
 });
 checkForUpdates({ prompt: true });
 document.getElementById("usb-poll-measure")?.addEventListener("click", () => {
