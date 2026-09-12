@@ -2,25 +2,31 @@
 
 Windows launcher and gamepad tester created by [Jrids](https://x.com/imjrid).
 
-![Jrids Controller Hub home](docs/screenshots/home.png)
-
 ## Screenshots
 
-**Gamepad tester**
+**Home**
 
-![Jrids gamepad tester](docs/screenshots/tester.png)
+![Jrids Controller Hub home](docs/screenshots/home.png)
 
-**Built-in config tools**
+**Hyperstrike**
 
 ![Hyperstrike config inside Jrids Controller Hub](docs/screenshots/hyperstrike.png)
 
+**Firebird**
+
 ![Firebird config inside Jrids Controller Hub](docs/screenshots/firebird.png)
 
-**Suiovoi and Marius**
+**Suiovoi**
 
 ![Suiovoi setup page](docs/screenshots/suiovoi.png)
 
+**Marius**
+
 ![Marius setup page](docs/screenshots/marius.png)
+
+**Gamepad Tester**
+
+![Jrids gamepad tester](docs/screenshots/tester.png)
 
 **8K Poll**
 
