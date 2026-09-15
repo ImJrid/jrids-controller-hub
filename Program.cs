@@ -58,6 +58,8 @@ internal sealed class HubForm : Form
         Margin = new Padding(12, 11, 0, 10)
     };
 
+    private readonly Button _configAction = CreateConfigButton("Launch USB Cache Cleaner");
+    private string? _configActionId;
     private bool _embedReady;
 
     public HubForm()
@@ -433,14 +435,26 @@ internal sealed class HubForm : Form
         close.Click += (_, _) => CloseConfig();
         var reload = CreateConfigButton("↻  Reload");
         reload.Click += (_, _) => _embedView.CoreWebView2?.Reload();
+        _configAction.Visible = false;
+        _configAction.Click += async (_, _) =>
+        {
+            if (_configActionId == "usb-cache-cleaner")
+                LaunchBundledTool("usb-cache-cleaner");
+            else if (_configActionId == "marius-update")
+                await OpenConfigAsync("https://update.mariusheier.com/", "Marius Update");
+            else if (_configActionId == "marius-setup")
+                await OpenConfigAsync("https://setup.mariusheier.com/", "Marius");
+        };
 
         _configBar.Controls.Add(_configTitle);
+        _configBar.Controls.Add(_configAction);
         _configBar.Controls.Add(reload);
         _configBar.Controls.Add(close);
-        _configBar.Resize += (_, _) =>
+        _configBar.Layout += (_, _) =>
         {
             close.Location = new Point(_configBar.ClientSize.Width - close.Width - 12, 7);
             reload.Location = new Point(close.Left - reload.Width - 8, 7);
+            _configAction.Location = new Point(reload.Left - _configAction.Width - 8, 7);
         };
     }
 
@@ -486,6 +500,21 @@ internal sealed class HubForm : Form
         }
 
         _configTitle.Text = $"{(string.IsNullOrWhiteSpace(title) ? "Configuration" : title).ToUpperInvariant()} CONFIG";
+        _configActionId = uri.Host.ToLowerInvariant() switch
+        {
+            "sy2.suiovoi.cc" => "usb-cache-cleaner",
+            "setup.mariusheier.com" => "marius-update",
+            "update.mariusheier.com" => "marius-setup",
+            _ => null
+        };
+        _configAction.Text = _configActionId switch
+        {
+            "usb-cache-cleaner" => "Launch USB Cache Cleaner",
+            "marius-update" => "Launch Updater",
+            "marius-setup" => "Back to Setup",
+            _ => ""
+        };
+        _configAction.Visible = _configActionId is not null;
         _configBar.Visible = true;
         _embedView.Visible = true;
         LayoutConfigView();
